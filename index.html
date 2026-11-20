@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>オンゲキアドベンチャー マップ デモ</title>
+<style>
+button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2rem;}
+
+:root {
+color-scheme: light dark;
+--sky-top: #8fd8ff;
+--sky-mid: #c4ecff;
+--sky-bottom: #eefbff;
+--ink: #173a52;
+--ink-soft: #3d637c;
+--panel-bg: rgba(255, 255, 255, 0.92);
+--panel-line: #b7dff2;
+--header-bg: rgba(255, 255, 255, 0.88);
+--tile-locked-fill: #ffd968;
+--tile-locked-stroke: #cf9413;
+--tile-open-fill: #8fe0a8;
+--tile-open-stroke: #2e9e5b;
+--tile-start-fill: #ff7d9c;
+--tile-start-stroke: #d63a5f;
+--edge: #5b7d94;
+--edge-open: #2e9e5b;
+--accent: #0f8fdd;
+--accent-ink: #ffffff;
+--btn-bg: #ffffff;
+--btn-line: #9fd2ea;
+--shadow: 0 6px 24px rgba(23, 80, 115, 0.18);
+}
+@media (prefers-color-scheme: dark) {
+:root {
+--sky-top: #0d3555;
+--sky-mid: #114a73;
+--sky-bottom: #0a2a44;
+--ink: #eaf6ff;
+--ink-soft: #a9cadd;
+--panel-bg: rgba(10, 42, 66, 0.94);
+--panel-line: #2a5d82;
+--header-bg: rgba(10, 42, 66, 0.9);
+--tile-locked-fill: #e9bc45;
+--tile-locked-stroke: #a97c0d;
+--tile-open-fill: #4cc273;
+--tile-open-stroke: #1f7a42;
+--tile-start-fill: #ff7d9c;
+--tile-start-stroke: #c22b4e;
+--edge: #7fa8c2;
+--edge-open: #4cc273;
+--accent: #35b6f5;
+--accent-ink: #06283d;
+--btn-bg: #0e3c5c;
+--btn-line: #2a5d82;
+--shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+}
+
+* { box-sizing: border-box;}
+html, body { height: 100%;}
+body {
+margin: 0;
+font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+color: var(--ink);
+background: var(--sky-mid);
+background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-bottom) 100%);
+}
+
+.wrap {
+max-width: 880px;
+margin: 0 auto;
+padding: 14px 14px 28px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+min-height: 100%;
+}
+
+header.progress {
+background: var(--header-bg);
+border: 1px solid var(--panel-line);
+border-radius: 14px;
+box-shadow: var(--shadow);
+padding: 12px 16px;
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 8px 18px;
+}
+header.progress .p-label { font-size: 0.82rem; color: var(--ink-soft); font-weight: 700; letter-spacing: 0.04em;}
+header.progress .p-value { font-size: 1.25rem; font-weight: 800;}
+header.progress .p-value small { font-size: 0.85rem; font-weight: 700; color: var(--ink-soft);}
+.bar {
+flex: 1 1 140px;
+height: 10px;
+border-radius: 999px;
+background: rgba(23, 58, 82, 0.14);
+overflow: hidden;
+min-width: 120px;
+}
+.bar > div {
+height: 100%;
+width: 0%;
+background: linear-gradient(90deg, #35c46f, #7ed957);
+border-radius: 999px;
+transition: width 0.35s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+.bar > div { transition: none;}
+}
+
+.note {
+margin: 0;
+font-size: 0.85rem;
+color: var(--ink-soft);
+background: var(--header-bg);
+border: 1px dashed var(--panel-line);
+border-radius: 10px;
+padding: 8px 12px;
+}
+
+.map-card {
+position: relative;
+border-radius: 18px;
+overflow: hidden;
+border: 1px solid var(--panel-line);
+box-shadow: var(--shadow);
+background: linear-gradient(180deg, var(--sky-top), var(--sky-mid) 60%, var(--sky-bottom));
+}
+.map-frame { height: min(62vh, 560px); min-height: 340px;}
+svg#map {
+display: block;
+width: 100%;
+height: 100%;
+touch-action: none;
+cursor: grab;
+user-select: none;
+-webkit-user-select: none;
+}
+svg#map.dragging { cursor: grabbing;}
+
+.zoom-ctl {
+display: flex;
+flex-direction: row;
+justify-content: flex-end;
+gap: 8px;
+margin-top: -4px;
+}
+.zoom-ctl button {
+width: 46px; height: 46px;
+min-height: 46px;
+border-radius: 12px;
+border: 1px solid var(--btn-line);
+background: var(--btn-bg);
+color: var(--ink);
+font-size: 1.3rem;
+font-weight: 800;
+line-height: 1;
+box-shadow: var(--shadow);
+cursor: pointer;
+}
+.zoom-ctl button:active { transform: scale(0.96);}
+.zoom-ctl button.reset { font-size: 0.72rem; width: 46px;}
+
+/* ---- SVG tile styling ---- */
+.edge-line { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; opacity: 0.75;}
+.edge-line.open { stroke: var(--edge-open); opacity: 0.95;}
+.frontier-line { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 7 8; opacity: 0.6;}
+.frontier-label {
+font-size: 15px; font-weight: 700; fill: var(--ink-soft);
+text-anchor: middle; paint-order: stroke; stroke: var(--sky-bottom); stroke-width: 4px;
+}
+.tile { cursor: pointer;}
+.tile .hex {
+stroke-width: 3.5;
+transition: fill 0.2s ease;
+}
+.tile.locked .hex { fill: var(--tile-locked-fill); stroke: var(--tile-locked-stroke);}
+.tile.open .hex { fill: var(--tile-open-fill); stroke: var(--tile-open-stroke);}
+.tile.start .hex { fill: var(--tile-start-fill); stroke: var(--tile-start-stroke);}
+.tile.selected .hex { stroke: var(--ink); stroke-width: 6;}
+.tile .icon { pointer-events: none;}
+.tile .cost {
+font-size: 17px; font-weight: 800; fill: #4a3200; text-anchor: middle; pointer-events: none;
+}
+.tile.open .cost { fill: #0d4423;}
+.tile.start .cost { fill: #5c0f22;}
+.tile .tname {
+font-size: 14.5px; font-weight: 700; fill: var(--ink); text-anchor: middle; pointer-events: none;
+paint-order: stroke; stroke: var(--sky-bottom); stroke-width: 4px;
+}
+.tile .check {
+font-size: 15px; font-weight: 900; fill: #ffffff; text-anchor: middle; pointer-events: none;
+}
+
+/* ---- detail panel ---- */
+section.detail {
+background: var(--panel-bg);
+border: 1px solid var(--panel-line);
+border-radius: 16px;
+box-shadow: var(--shadow);
+padding: 16px 18px;
+}
+section.detail h2 { margin: 0 0 4px; font-size: 1.3rem;}
+section.detail .empty { color: var(--ink-soft); margin: 4px 0; font-size: 0.95rem;}
+.d-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 10px 16px;
+margin: 12px 0;
+}
+.d-item .k { font-size: 0.78rem; color: var(--ink-soft); font-weight: 700; letter-spacing: 0.03em;}
+.d-item .v { font-size: 1.08rem; font-weight: 800; margin-top: 2px;}
+.d-item .v small { font-size: 0.8rem; font-weight: 700; color: var(--ink-soft);}
+.route { font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 12px;}
+.route b { color: var(--ink);}
+.badge {
+display: inline-block;
+font-size: 0.78rem; font-weight: 800;
+padding: 3px 10px; border-radius: 999px; vertical-align: middle; margin-left: 8px;
+}
+.badge.open { background: #2e9e5b; color: #fff;}
+.badge.locked { background: #cf9413; color: #fff;}
+button.toggle {
+min-height: 48px;
+padding: 10px 22px;
+border-radius: 12px;
+border: none;
+font-size: 1rem; font-weight: 800;
+background: var(--accent); color: var(--accent-ink);
+cursor: pointer;
+box-shadow: var(--shadow);
+}
+button.toggle.undo { background: var(--btn-bg); color: var(--ink); border: 1px solid var(--btn-line);}
+button.toggle:active { transform: scale(0.98);}
+
+.legend {
+display: flex; flex-wrap: wrap; gap: 6px 16px;
+font-size: 0.82rem; color: var(--ink-soft);
+padding: 0 4px;
+}
+.legend span::before {
+content: ""; display: inline-block; width: 11px; height: 11px;
+border-radius: 3px; margin-right: 6px; vertical-align: -1px;
+background: var(--c, #ccc);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="progress" aria-label="進捗">
+<div>
+<div class="p-label">解放済みマス</div>
+<div class="p-value"><span id="p-count">1</span> <small>/ <span id="p-total">10</span> マス</small></div>
+</div>
+<div class="bar" aria-hidden="true"><div id="p-bar"></div></div>
+<div>
+<div class="p-label">解放済みの合計</div>
+<div class="p-value"><span id="p-ap">0</span> <small>ap</small></div>
+</div>
+</header>
+
+<p class="note">デモ版：スタート地点の写真1枚だけから作成。探索が進むたびに更新されます。</p>
+
+<div class="map-card">
+<div class="map-frame">
+<svg id="map" viewBox="-45 -35 790 870" role="application" aria-label="アドベンチャーマップ"></svg>
+</div>
+</div>
+<div class="zoom-ctl">
+<button type="button" id="zoom-in" aria-label="拡大">＋</button>
+<button type="button" id="zoom-out" aria-label="縮小">−</button>
+<button type="button" id="zoom-reset" class="reset" aria-label="全体表示に戻す">全体</button>
+</div>
+
+<div class="legend">
+<span style="--c:#ffd968">未解放</span>
+<span style="--c:#8fe0a8">解放済み</span>
+<span style="--c:#ff7d9c">スタート</span>
+<span>破線の先は未探索エリア</span>
+</div>
+
+<section class="detail" id="detail" aria-live="polite">
+<p class="empty">マスをタップすると、報酬や必要apなどの詳細がここに表示されます。マップはドラッグで移動、＋／−ボタンで拡大縮小できます。</p>
+</section>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+マップデータ（写真から読み取ったマスをここに追加・修正する）
+gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム）
+============================================================ */
+const TILES = [
+{ id: "S", name: "スタート", type: "start", ap: 0, gx: 0, gy: 0},
+{ id: "NW1", name: "左上1", type: "normal", ap: 10, gx: -1, gy: -1},
+{ id: "SG", name: "左上2", type: "song", ap: 30, gx: -2, gy: -2},
+{ id: "SZ1", name: "左上3", type: "shizuku", ap: 100, gx: -1, gy: -3},
+{ id: "NE1", name: "右上1", type: "normal", ap: 10, gx: 1, gy: -1},
+{ id: "NE2", name: "右上2", type: "all", ap: 15, gx: 2, gy: -2},
+{ id: "SW1", name: "左下1", type: "normal", ap: 10, gx: -1, gy: 1},
+{ id: "SW2", name: "左下2", type: "normal", ap: 10, gx: -2, gy: 2},
+{ id: "SE1", name: "右下1", type: "normal", ap: 10, gx: 1, gy: 1},
+{ id: "SE2", name: "右下2", type: "normal", ap: 10, gx: 2, gy: 2}
+];
+
+/* 接続（線）: [マスID, マスID] */
+const EDGES = [
+["S", "NW1"], ["NW1", "SG"], ["SG", "SZ1"],
+["S", "NE1"], ["NE1", "NE2"],
+["S", "SW1"], ["SW1", "SW2"],
+["S", "SE1"], ["SE1", "SE2"]
+];
+
+/* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
+const FRONTIER = [
+{ from: "SG", dx: -1, dy: -1},
+{ from: "NE2", dx: 1, dy: -1},
+{ from: "SW2", dx: -1, dy: 1},
+{ from: "SE2", dx: 1, dy: 1}
+];
+
+const TYPE_LABEL = {
+start: "スタート",
+normal: "通常",
+song: "楽曲",
+shizuku: "しずく",
+all: "強化アイテム"
+};
+
+const START_ID = "S";
+const STORAGE_KEY = "ongeki-adventure-demo-unlocked-v1";
+
+/* ---------- レイアウト ---------- */
+const STEP_X = 118, STEP_Y = 118;
+const ORIGIN_X = 350, ORIGIN_Y = 400;
+const HEX_R = 46;
+const byId = {};
+TILES.forEach(t => {
+t.x = ORIGIN_X + t.gx * STEP_X;
+t.y = ORIGIN_Y + t.gy * STEP_Y;
+byId[t.id] = t;
+});
+
+/* ---------- 最短経路（ダイクストラ：経路上のマスのコスト合計） ---------- */
+const adj = {};
+TILES.forEach(t => { adj[t.id] = [];});
+EDGES.forEach(([a, b]) => { adj[a].push(b); adj[b].push(a);});
+
+function shortestFromStart() {
+const dist = {}, prev = {};
+TILES.forEach(t => { dist[t.id] = Infinity;});
+dist[START_ID] = 0;
+const done = new Set();
+while (done.size < TILES.length) {
+let u = null, best = Infinity;
+for (const t of TILES) {
+if (!done.has(t.id) && dist[t.id] < best) { best = dist[t.id]; u = t.id;}
+}
+if (u === null) break;
+done.add(u);
+for (const v of adj[u]) {
+const nd = dist[u] + byId[v].ap;
+if (nd < dist[v]) { dist[v] = nd; prev[v] = u;}
+}
+}
+return { dist, prev};
+}
+const ROUTE = shortestFromStart();
+function routeNames(id) {
+const names = [];
+let cur = id;
+while (cur) { names.unshift(byId[cur].name); cur = ROUTE.prev[cur];}
+return names;
+}
+
+/* ---------- 解放状態（localStorage） ---------- */
+/* iOS Safari（プライベートモード等）では localStorage へのアクセス自体が
+例外になることがあるため、最初に使えるかどうかを確認してから使う */
+const storage = (() => {
+try {
+const probe = "__ongeki_probe__";
+window.localStorage.setItem(probe, "1");
+window.localStorage.removeItem(probe);
+return window.localStorage;
+} catch (e) {
+return null; /* 使えない環境ではメモリ内のみで動作する */
+}
+})();
+let unlocked = new Set([START_ID]);
+if (storage) {
+try {
+const saved = JSON.parse(storage.getItem(STORAGE_KEY) || "[]");
+if (Array.isArray(saved)) saved.forEach(id => { if (byId[id]) unlocked.add(id);});
+} catch (e) { /* 読み取りに失敗した場合は初期状態で続行 */}
+}
+unlocked.add(START_ID);
+function persist() {
+if (!storage) return;
+try { storage.setItem(STORAGE_KEY, JSON.stringify(Array.from(unlocked)));} catch (e) {}
+}
+
+/* ---------- SVG 構築 ---------- */
+const svg = document.getElementById("map");
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs) {
+const n = document.createElementNS(NS, tag);
+for (const k in attrs) n.setAttribute(k, attrs[k]);
+return n;
+}
+function hexPoints(cx, cy, r) {
+const pts = [];
+for (let i = 0; i < 6; i++) {
+const a = (Math.PI / 180) * (60 * i - 30);
+pts.push((cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1));
+}
+return pts.join(" ");
+}
+
+const viewport = el("g", {});
+svg.appendChild(viewport);
+const gEdges = el("g", {}), gFrontier = el("g", {}), gTiles = el("g", {});
+viewport.appendChild(gEdges); viewport.appendChild(gFrontier); viewport.appendChild(gTiles);
+
+const edgeEls = {};
+EDGES.forEach(([a, b]) => {
+const line = el("line", { x1: byId[a].x, y1: byId[a].y, x2: byId[b].x, y2: byId[b].y, "class": "edge-line"});
+gEdges.appendChild(line);
+edgeEls[a + "|" + b] = line; edgeEls[b + "|" + a] = line;
+});
+
+FRONTIER.forEach(f => {
+const t = byId[f.from];
+const len = Math.hypot(f.dx * STEP_X, f.dy * STEP_Y);
+const ux = (f.dx * STEP_X) / len, uy = (f.dy * STEP_Y) / len;
+const x1 = t.x + ux * (HEX_R + 4), y1 = t.y + uy * (HEX_R + 4);
+const x2 = t.x + ux * (len * 0.82), y2 = t.y + uy * (len * 0.82);
+gFrontier.appendChild(el("line", { x1, y1, x2, y2, "class": "frontier-line"}));
+const label = el("text", { x: t.x + ux * (len * 0.82 + 20), y: t.y + uy * (len * 0.82 + 20) + 5, "class": "frontier-label"});
+label.textContent = "未探索";
+gFrontier.appendChild(label);
+});
+
+const ICONS = {
+song: t => {
+const tx = el("text", { x: t.x, y: t.y - 2, "class": "icon", "text-anchor": "middle", "font-size": "34", fill: "#7a4d00"});
+tx.textContent = "♪";
+return tx;
+},
+shizuku: t => {
+const p = el("path", {
+d: "M0,-17 C7,-6 12,2 12,8 A12,12 0 1 1 -12,8 C-12,2 -7,-6 0,-17 Z",
+transform: "translate(" + t.x + "," + (t.y - 8) + ")",
+fill: "#38b6e8", stroke: "#1273a8", "stroke-width": "2", "class": "icon"
+});
+return p;
+},
+all: t => {
+const g = el("g", { "class": "icon"});
+const r = el("rect", { x: t.x - 21, y: t.y - 21, width: 42, height: 24, rx: 7, fill: "#e2543e", stroke: "#a52f1c", "stroke-width": "2"});
+const tx = el("text", { x: t.x, y: t.y - 4, "text-anchor": "middle", "font-size": "14.5", "font-weight": "900", fill: "#ffffff"});
+tx.textContent = "ALL";
+g.appendChild(r); g.appendChild(tx);
+return g;
+},
+start: t => {
+const tx = el("text", { x: t.x, y: t.y + 3, "class": "icon", "text-anchor": "middle", "font-size": "32", fill: "#ffffff", stroke: "#c22b4e", "stroke-width": "0.8"});
+tx.textContent = "★";
+return tx;
+},
+normal: t => {
+const c = el("circle", { cx: t.x, cy: t.y - 10, r: 5, fill: "#a8740a", "class": "icon", opacity: "0.65"});
+return c;
+}
+};
+
+const tileEls = {};
+TILES.forEach(t => {
+const g = el("g", { "class": "tile", "data-id": t.id, role: "button", "aria-label": t.name});
+g.appendChild(el("polygon", { points: hexPoints(t.x, t.y, HEX_R), "class": "hex"}));
+g.appendChild(ICONS[t.type](t));
+if (t.type!== "start") {
+const cost = el("text", { x: t.x, y: t.y + 26, "class": "cost"});
+cost.textContent = t.ap + " ap";
+g.appendChild(cost);
+} else {
+const cost = el("text", { x: t.x, y: t.y + 28, "class": "cost", "font-size": "13"});
+cost.textContent = "START";
+g.appendChild(cost);
+}
+const check = el("text", { x: t.x + HEX_R - 13, y: t.y - HEX_R + 20, "class": "check", "data-check": "1"});
+check.textContent = "✓";
+g.appendChild(check);
+const name = el("text", { x: t.x, y: t.y + HEX_R + 22, "class": "tname"});
+name.textContent = t.name;
+g.appendChild(name);
+gTiles.appendChild(g);
+tileEls[t.id] = g;
+});
+
+/* ---------- 状態の反映 ---------- */
+let selectedId = null;
+const detail = document.getElementById("detail");
+
+function refreshTiles() {
+TILES.forEach(t => {
+const g = tileEls[t.id];
+const isOpen = unlocked.has(t.id);
+g.setAttribute("class",
+"tile" + (isOpen? " open": " locked") + (t.type === "start"? " start": "") + (selectedId === t.id? " selected": ""));
+const check = g.querySelector("[data-check]");
+if (check) check.style.display = isOpen && t.type!== "start"? "": "none";
+});
+EDGES.forEach(([a, b]) => {
+const line = edgeEls[a + "|" + b];
+if (unlocked.has(a) && unlocked.has(b)) line.classList.add("open");
+else line.classList.remove("open");
+});
+}
+
+function refreshProgress() {
+const count = unlocked.size;
+const apSum = Array.from(unlocked).reduce((s, id) => s + byId[id].ap, 0);
+document.getElementById("p-count").textContent = count;
+document.getElementById("p-total").textContent = TILES.length;
+document.getElementById("p-ap").textContent = apSum;
+document.getElementById("p-bar").style.width = (TILES.length? (count / TILES.length) * 100: 0) + "%";
+}
+
+function renderDetail() {
+if (!selectedId) {
+detail.innerHTML = '<p class="empty">マスをタップすると、報酬や必要apなどの詳細がここに表示されます。マップはドラッグで移動、＋／−ボタンで拡大縮小できます。</p>';
+return;
+}
+const t = byId[selectedId];
+const isOpen = unlocked.has(t.id);
+const isStart = t.type === "start";
+const total = ROUTE.dist[t.id];
+const route = routeNames(t.id).join(" → ");
+let html = "";
+html += "<h2>" + t.name + '<span class="badge ' + (isOpen? "open": "locked") + '">' + (isOpen? "解放済み": "未解放") + "</span></h2>";
+html += '<div class="d-grid">';
+html += '<div class="d-item"><div class="k">報酬の種類</div><div class="v">' + TYPE_LABEL[t.type] + "</div></div>";
+html += '<div class="d-item"><div class="k">必要ap</div><div class="v">' + (isStart? "―": t.ap + " <small>ap</small>") + "</div></div>";
+html += '<div class="d-item"><div class="k">スタートからの合計ap（最短経路）</div><div class="v">' + total + " <small>ap</small></div></div>";
+html += "</div>";
+html += '<p class="route">最短経路： <b>' + route + "</b></p>";
+if (!isStart) {
+html += '<button type="button" class="toggle' + (isOpen? " undo": "") + '" id="toggle-btn">' +
+(isOpen? "解放を取り消す": "解放済みにする") + "</button>";
+} else {
+html += '<p class="route">スタート地点は常時解放済みです。</p>';
+}
+detail.innerHTML = html;
+const btn = document.getElementById("toggle-btn");
+if (btn) {
+btn.addEventListener("click", () => {
+if (unlocked.has(t.id)) unlocked.delete(t.id); else unlocked.add(t.id);
+persist();
+refreshTiles(); refreshProgress(); renderDetail();
+});
+}
+}
+
+function select(id) {
+selectedId = id;
+refreshTiles();
+renderDetail();
+}
+
+/* ---------- パン＆ズーム ---------- */
+const view = { x: 0, y: 0, k: 1};
+const K_MIN = 0.55, K_MAX = 3.2;
+function applyView() {
+viewport.setAttribute("transform", "translate(" + view.x + "," + view.y + ") scale(" + view.k + ")");
+}
+function resetView() { view.x = 0; view.y = 0; view.k = 1; applyView();}
+function zoomBy(factor, cx, cy) {
+const rect = svg.getBoundingClientRect();
+const pt = svgPoint(cx, cy);
+const nk = Math.min(K_MAX, Math.max(K_MIN, view.k * factor));
+const f = nk / view.k;
+view.x = pt.x - (pt.x - view.x) * f;
+view.y = pt.y - (pt.y - view.y) * f;
+view.k = nk;
+applyView();
+}
+function svgPoint(clientX, clientY) {
+/* createSVGPoint / getScreenCTM が使えない環境向けに、
+viewBox と表示サイズから座標を計算するフォールバックを用意する */
+try {
+if (svg.createSVGPoint && svg.getScreenCTM()) {
+const pt = svg.createSVGPoint();
+pt.x = clientX; pt.y = clientY;
+return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+} catch (e) { /* フォールバックへ */}
+const rect = svg.getBoundingClientRect();
+const vb = svg.viewBox.baseVal;
+return {
+x: vb.x + ((clientX - rect.left) / rect.width) * vb.width,
+y: vb.y + ((clientY - rect.top) / rect.height) * vb.height
+};
+}
+document.getElementById("zoom-in").addEventListener("click", () => {
+const r = svg.getBoundingClientRect();
+zoomBy(1.3, r.left + r.width / 2, r.top + r.height / 2);
+});
+document.getElementById("zoom-out").addEventListener("click", () => {
+const r = svg.getBoundingClientRect();
+zoomBy(1 / 1.3, r.left + r.width / 2, r.top + r.height / 2);
+});
+document.getElementById("zoom-reset").addEventListener("click", resetView);
+svg.addEventListener("wheel", e => {
+e.preventDefault();
+zoomBy(e.deltaY < 0? 1.12: 1 / 1.12, e.clientX, e.clientY);
+}, { passive: false});
+
+const pointers = new Map();
+let dragMoved = 0, pinchDist = 0, downTileId = null;
+svg.addEventListener("pointerdown", e => {
+const tg = e.target.closest ? e.target.closest(".tile") : null;
+downTileId = tg ? tg.getAttribute("data-id") : null;
+try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+pointers.set(e.pointerId, { x: e.clientX, y: e.clientY});
+dragMoved = 0;
+if (pointers.size === 2) {
+const pair = Array.from(pointers.values());
+pinchDist = Math.hypot(pair[0].x - pair[1].x, pair[0].y - pair[1].y);
+}
+svg.classList.add("dragging");
+});
+svg.addEventListener("pointermove", e => {
+if (!pointers.has(e.pointerId)) return;
+const prev = pointers.get(e.pointerId);
+const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+pointers.set(e.pointerId, { x: e.clientX, y: e.clientY});
+if (pointers.size === 1) {
+dragMoved += Math.abs(dx) + Math.abs(dy);
+const ctm = svg.getScreenCTM();
+const scale = ctm && ctm.a ? 1 / ctm.a : 1;
+view.x += dx * scale; view.y += dy * scale;
+applyView();
+} else if (pointers.size === 2) {
+dragMoved += 10;
+const pair = Array.from(pointers.values());
+const d = Math.hypot(pair[0].x - pair[1].x, pair[0].y - pair[1].y);
+if (pinchDist > 0 && d > 0) {
+zoomBy(d / pinchDist, (pair[0].x + pair[1].x) / 2, (pair[0].y + pair[1].y) / 2);
+}
+pinchDist = d;
+}
+});
+function endPointer(e) {
+const wasTap = pointers.size === 1 && dragMoved < 8;
+pointers.delete(e.pointerId);
+if (pointers.size === 0) svg.classList.remove("dragging");
+if (wasTap && downTileId) select(downTileId);
+downTileId = null;
+}
+svg.addEventListener("pointerup", endPointer);
+svg.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); if (pointers.size === 0) svg.classList.remove("dragging");});
+
+/* Pointer Events 非対応の古いブラウザ向けフォールバック
+（タップで選択、マウス／1本指ドラッグで移動のみ） */
+if (!window.PointerEvent) {
+let fbDown = null, fbMoved = 0, fbTile = null;
+const fbStart = (x, y, target) => {
+const tg = target && target.closest ? target.closest(".tile") : null;
+fbTile = tg ? tg.getAttribute("data-id") : null;
+fbDown = { x, y}; fbMoved = 0;
+svg.classList.add("dragging");
+};
+const fbMove = (x, y) => {
+if (!fbDown) return;
+const dx = x - fbDown.x, dy = y - fbDown.y;
+fbDown = { x, y};
+fbMoved += Math.abs(dx) + Math.abs(dy);
+const ctm = svg.getScreenCTM();
+const scale = ctm && ctm.a ? 1 / ctm.a : 1;
+view.x += dx * scale; view.y += dy * scale;
+applyView();
+};
+const fbEnd = () => {
+if (fbDown && fbMoved < 8 && fbTile) select(fbTile);
+fbDown = null; fbTile = null;
+svg.classList.remove("dragging");
+};
+svg.addEventListener("mousedown", e => fbStart(e.clientX, e.clientY, e.target));
+svg.addEventListener("mousemove", e => fbMove(e.clientX, e.clientY));
+svg.addEventListener("mouseup", fbEnd);
+svg.addEventListener("mouseleave", fbEnd);
+svg.addEventListener("touchstart", e => {
+if (e.touches.length === 1) fbStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+}, { passive: true});
+svg.addEventListener("touchmove", e => {
+if (e.touches.length === 1 && fbDown) { e.preventDefault(); fbMove(e.touches[0].clientX, e.touches[0].clientY);}
+}, { passive: false});
+svg.addEventListener("touchend", fbEnd);
+svg.addEventListener("touchcancel", fbEnd);
+}
+
+/* ---------- 初期表示 ---------- */
+refreshTiles();
+refreshProgress();
+renderDetail();
+applyView();
+</script>
+</body>
+</html>
