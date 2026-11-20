@@ -250,7 +250,7 @@ background: var(--c, #ccc);
 <div class="wrap">
 <div class="map-card">
 <div class="map-frame">
-<svg id="map" viewBox="-45 -35 790 870" role="application" aria-label="アドベンチャーマップ"></svg>
+<svg id="map" viewBox="-270 -210 1040 1040" role="application" aria-label="アドベンチャーマップ"></svg>
 </div>
 <div class="zoom-ctl">
 <button type="button" id="zoom-in" aria-label="拡大">＋</button>
@@ -273,7 +273,7 @@ background: var(--c, #ccc);
 <footer class="progress" aria-label="進捗">
 <div>
 <div class="p-label">解放済みマス</div>
-<div class="p-value"><span id="p-count">1</span> <small>/ <span id="p-total">10</span> マス</small></div>
+<div class="p-value"><span id="p-count">1</span> <small>/ <span id="p-total">12</span> マス</small></div>
 </div>
 <div class="bar" aria-hidden="true"><div id="p-bar"></div></div>
 <div>
@@ -289,13 +289,15 @@ background: var(--c, #ccc);
 /* ============================================================
 マップデータ（写真から読み取ったマスをここに追加・修正する）
 gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
-type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス）
 ============================================================ */
 const TILES = [
 { id: "S", name: "スタート", type: "start", ap: 0, gx: 0, gy: 0},
 { id: "NW1", name: "左上1", type: "normal", ap: 10, gx: -1, gy: -1},
 { id: "SG", name: "左上2", type: "song", ap: 30, gx: -2, gy: -2},
 { id: "SZ1", name: "左上3", type: "shizuku", ap: 100, gx: -1, gy: -3},
+{ id: "NW4", name: "左上4", type: "event", ap: 40, gx: -3, gy: -3},
+{ id: "NW5", name: "左上5", type: "normal", ap: 10, gx: -4, gy: -4},
 { id: "NE1", name: "右上1", type: "normal", ap: 10, gx: 1, gy: -1},
 { id: "NE2", name: "右上2", type: "all", ap: 15, gx: 2, gy: -2},
 { id: "SW1", name: "左下1", type: "normal", ap: 10, gx: -1, gy: 1},
@@ -306,7 +308,7 @@ const TILES = [
 
 /* 接続（線）: [マスID, マスID] */
 const EDGES = [
-["S", "NW1"], ["NW1", "SG"], ["SG", "SZ1"],
+["S", "NW1"], ["NW1", "SG"], ["SG", "SZ1"], ["SG", "NW4"], ["NW4", "NW5"],
 ["S", "NE1"], ["NE1", "NE2"],
 ["S", "SW1"], ["SW1", "SW2"],
 ["S", "SE1"], ["SE1", "SE2"]
@@ -314,7 +316,7 @@ const EDGES = [
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
-{ from: "SG", dx: -1, dy: -1},
+{ from: "NW5", dx: -1, dy: -1},
 { from: "NE2", dx: 1, dy: -1},
 { from: "SW2", dx: -1, dy: 1},
 { from: "SE2", dx: 1, dy: 1}
@@ -325,7 +327,8 @@ start: "スタート",
 normal: "通常",
 song: "楽曲",
 shizuku: "しずく",
-all: "強化アイテム"
+all: "強化アイテム",
+event: "！マス（カード／プレート／ストーリー）"
 };
 
 const START_ID = "S";
@@ -461,6 +464,14 @@ const r = el("rect", { x: t.x - 21, y: t.y - 21, width: 42, height: 24, rx: 7, f
 const tx = el("text", { x: t.x, y: t.y - 4, "text-anchor": "middle", "font-size": "14.5", "font-weight": "900", fill: "#ffffff"});
 tx.textContent = "ALL";
 g.appendChild(r); g.appendChild(tx);
+return g;
+},
+event: t => {
+const g = el("g", { "class": "icon"});
+const d = el("polygon", { points: t.x + "," + (t.y - 28) + " " + (t.x + 17) + "," + (t.y - 11) + " " + t.x + "," + (t.y + 6) + " " + (t.x - 17) + "," + (t.y - 11), fill: "#ffffff", stroke: "#d63a5f", "stroke-width": "2.5"});
+const tx = el("text", { x: t.x, y: t.y - 4, "text-anchor": "middle", "font-size": "22", "font-weight": "900", fill: "#d63a5f"});
+tx.textContent = "!";
+g.appendChild(d); g.appendChild(tx);
 return g;
 },
 start: t => {
