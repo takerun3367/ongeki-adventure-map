@@ -31,6 +31,8 @@ color-scheme: light dark;
 --accent-ink: #ffffff;
 --btn-bg: #ffffff;
 --btn-line: #9fd2ea;
+--zoom-bg: rgba(255, 255, 255, 0.82);
+--zoom-line: rgba(159, 210, 234, 0.9);
 --shadow: 0 6px 24px rgba(23, 80, 115, 0.18);
 }
 @media (prefers-color-scheme: dark) {
@@ -55,6 +57,8 @@ color-scheme: light dark;
 --accent-ink: #06283d;
 --btn-bg: #0e3c5c;
 --btn-line: #2a5d82;
+--zoom-bg: rgba(10, 42, 66, 0.82);
+--zoom-line: rgba(42, 93, 130, 0.9);
 --shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
 }
 }
@@ -72,14 +76,14 @@ background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(-
 .wrap {
 max-width: 880px;
 margin: 0 auto;
-padding: 14px 14px 28px;
+padding: 10px 14px 28px;
 display: flex;
 flex-direction: column;
 gap: 12px;
 min-height: 100%;
 }
 
-header.progress {
+.progress {
 background: var(--header-bg);
 border: 1px solid var(--panel-line);
 border-radius: 14px;
@@ -90,9 +94,9 @@ flex-wrap: wrap;
 align-items: center;
 gap: 8px 18px;
 }
-header.progress .p-label { font-size: 0.82rem; color: var(--ink-soft); font-weight: 700; letter-spacing: 0.04em;}
-header.progress .p-value { font-size: 1.25rem; font-weight: 800;}
-header.progress .p-value small { font-size: 0.85rem; font-weight: 700; color: var(--ink-soft);}
+.progress .p-label { font-size: 0.82rem; color: var(--ink-soft); font-weight: 700; letter-spacing: 0.04em;}
+.progress .p-value { font-size: 1.25rem; font-weight: 800;}
+.progress .p-value small { font-size: 0.85rem; font-weight: 700; color: var(--ink-soft);}
 .bar {
 flex: 1 1 140px;
 height: 10px;
@@ -110,16 +114,6 @@ transition: width 0.35s ease;
 }
 @media (prefers-reduced-motion: reduce) {
 .bar > div { transition: none;}
-}
-
-.note {
-margin: 0;
-font-size: 0.85rem;
-color: var(--ink-soft);
-background: var(--header-bg);
-border: 1px dashed var(--panel-line);
-border-radius: 10px;
-padding: 8px 12px;
 }
 
 .map-card {
@@ -143,27 +137,30 @@ user-select: none;
 svg#map.dragging { cursor: grabbing;}
 
 .zoom-ctl {
+position: absolute;
+right: 10px;
+bottom: 10px;
+z-index: 5;
 display: flex;
-flex-direction: row;
-justify-content: flex-end;
-gap: 8px;
-margin-top: -4px;
+flex-direction: column;
+gap: 6px;
 }
 .zoom-ctl button {
-width: 46px; height: 46px;
-min-height: 46px;
+width: 44px; height: 44px;
+min-height: 44px;
 border-radius: 12px;
-border: 1px solid var(--btn-line);
-background: var(--btn-bg);
+border: 1px solid var(--zoom-line);
+background: var(--zoom-bg);
 color: var(--ink);
-font-size: 1.3rem;
+font-size: 1.25rem;
 font-weight: 800;
 line-height: 1;
-box-shadow: var(--shadow);
+box-shadow: 0 3px 10px rgba(23, 80, 115, 0.22);
 cursor: pointer;
+touch-action: manipulation;
 }
 .zoom-ctl button:active { transform: scale(0.96);}
-.zoom-ctl button.reset { font-size: 0.72rem; width: 46px;}
+.zoom-ctl button.reset { font-size: 0.7rem; width: 44px;}
 
 /* ---- SVG tile styling ---- */
 .edge-line { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; opacity: 0.75;}
@@ -251,29 +248,15 @@ background: var(--c, #ccc);
 </head>
 <body>
 <div class="wrap">
-<header class="progress" aria-label="進捗">
-<div>
-<div class="p-label">解放済みマス</div>
-<div class="p-value"><span id="p-count">1</span> <small>/ <span id="p-total">10</span> マス</small></div>
-</div>
-<div class="bar" aria-hidden="true"><div id="p-bar"></div></div>
-<div>
-<div class="p-label">解放済みの合計</div>
-<div class="p-value"><span id="p-ap">0</span> <small>ap</small></div>
-</div>
-</header>
-
-<p class="note">デモ版：スタート地点の写真1枚だけから作成。探索が進むたびに更新されます。</p>
-
 <div class="map-card">
 <div class="map-frame">
 <svg id="map" viewBox="-45 -35 790 870" role="application" aria-label="アドベンチャーマップ"></svg>
-</div>
 </div>
 <div class="zoom-ctl">
 <button type="button" id="zoom-in" aria-label="拡大">＋</button>
 <button type="button" id="zoom-out" aria-label="縮小">−</button>
 <button type="button" id="zoom-reset" class="reset" aria-label="全体表示に戻す">全体</button>
+</div>
 </div>
 
 <div class="legend">
@@ -286,6 +269,18 @@ background: var(--c, #ccc);
 <section class="detail" id="detail" aria-live="polite">
 <p class="empty">マスをタップすると、報酬や必要apなどの詳細がここに表示されます。マップはドラッグで移動、＋／−ボタンで拡大縮小できます。</p>
 </section>
+
+<footer class="progress" aria-label="進捗">
+<div>
+<div class="p-label">解放済みマス</div>
+<div class="p-value"><span id="p-count">1</span> <small>/ <span id="p-total">10</span> マス</small></div>
+</div>
+<div class="bar" aria-hidden="true"><div id="p-bar"></div></div>
+<div>
+<div class="p-label">解放済みの合計</div>
+<div class="p-value"><span id="p-ap">0</span> <small>ap</small></div>
+</div>
+</footer>
 </div>
 
 <script>
