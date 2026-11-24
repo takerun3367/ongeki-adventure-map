@@ -250,7 +250,7 @@ background: var(--c, #ccc);
 <div class="wrap">
 <div class="map-card">
 <div class="map-frame">
-<svg id="map" viewBox="-270 -210 1040 1040" role="application" aria-label="アドベンチャーマップ"></svg>
+<svg id="map" viewBox="-950 -1962 1900 2698" role="application" aria-label="アドベンチャーマップ"></svg>
 </div>
 <div class="zoom-ctl">
 <button type="button" id="zoom-in" aria-label="拡大">＋</button>
@@ -289,7 +289,8 @@ background: var(--c, #ccc);
 /* ============================================================
 マップデータ（写真から読み取ったマスをここに追加・修正する）
 gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
-type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー）
+ap: null は ap不明（合計計算では 0 として扱う）
 ============================================================ */
 const TILES = [
 { id: "S", name: "スタート", type: "start", ap: 0, gx: 0, gy: 0},
@@ -298,10 +299,39 @@ const TILES = [
 { id: "SZ1", name: "左上3", type: "shizuku", ap: 100, gx: -1, gy: -3},
 { id: "NW4", name: "左上4", type: "event", ap: 40, gx: -3, gy: -3},
 { id: "NW5", name: "左上5", type: "normal", ap: 10, gx: -4, gy: -4},
+{ id: "ALL15A", name: "左上6", type: "all", ap: 15, gx: -5, gy: -5},
+{ id: "SZ2", name: "左上7", type: "shizuku", ap: 100, gx: -6, gy: -4},
+{ id: "P10B", name: "左上8", type: "normal", ap: 10, gx: -5, gy: -6},
+{ id: "PLATE15", name: "左上9", type: "gift", ap: 15, gx: -7, gy: -8},
+{ id: "GIFT15", name: "左上10", type: "gift", ap: 15, gx: -6, gy: -7},
+{ id: "P15A", name: "左上11", type: "normal", ap: 15, gx: -7, gy: -9},
+{ id: "P15C", name: "左上12", type: "normal", ap: 15, gx: -8, gy: -7},
+{ id: "P15E", name: "左上13", type: "normal", ap: 15, gx: -7, gy: -6},
+{ id: "COIN30", name: "左上14", type: "coin", ap: 30, gx: -8, gy: -4},
+{ id: "ALL20", name: "左上15", type: "all", ap: 20, gx: -9, gy: -3},
+{ id: "M30", name: "左上16", type: "money", ap: 30, gx: -6, gy: -10},
+{ id: "P15B", name: "左上17", type: "normal", ap: 15, gx: -5, gy: -11},
+{ id: "GIFT25", name: "左上18", type: "gift", ap: 25, gx: -5, gy: -12},
+{ id: "SG60", name: "左上19", type: "song", ap: 60, gx: -4, gy: -10},
+{ id: "P15D", name: "左上20", type: "normal", ap: 15, gx: -3, gy: -9},
+{ id: "HEART75", name: "左上21", type: "gift", ap: 75, gx: -3, gy: -8},
+{ id: "P20", name: "左上22", type: "normal", ap: 20, gx: -2, gy: -10},
+{ id: "P7NE", name: "左上23", type: "normal", ap: null, gx: -4, gy: -13},
+{ id: "SZ200", name: "左上24", type: "shizuku", ap: 200, gx: -3, gy: -14},
+{ id: "P7NW", name: "左上25", type: "normal", ap: null, gx: -6, gy: -13},
+{ id: "BANGX", name: "左上26", type: "event", ap: null, gx: -1, gy: -15},
+{ id: "P9-8", name: "左上27", type: "all", ap: 30, gx: -10, gy: -14},
+{ id: "P9-7", name: "左上28", type: "normal", ap: 20, gx: -10, gy: -15},
+{ id: "P9-6", name: "左上29", type: "shizuku", ap: 100, gx: -10, gy: -16},
+{ id: "P9-5", name: "左上30", type: "money", ap: 60, gx: -9, gy: -17},
+{ id: "P9-4", name: "左上31", type: "all", ap: 50, gx: -8, gy: -18},
+{ id: "P9-3", name: "左上32", type: "gift", ap: 150, gx: -8, gy: -19},
+{ id: "P9-2", name: "左上33", type: "event", ap: 300, gx: -9, gy: -19},
+{ id: "P9-1", name: "左上34", type: "shizuku", ap: 500, gx: -10, gy: -19},
 { id: "NE1", name: "右上1", type: "normal", ap: 10, gx: 1, gy: -1},
-{ id: "NE2", name: "右上2", type: "all", ap: 15, gx: 2, gy: -2},
+{ id: "NE2", name: "右上2", type: "normal", ap: 10, gx: 2, gy: -2},
 { id: "SW1", name: "左下1", type: "normal", ap: 10, gx: -1, gy: 1},
-{ id: "SW2", name: "左下2", type: "normal", ap: 10, gx: -2, gy: 2},
+{ id: "SW2", name: "左下2", type: "all", ap: 15, gx: -2, gy: 2},
 { id: "SE1", name: "右下1", type: "normal", ap: 10, gx: 1, gy: 1},
 { id: "SE2", name: "右下2", type: "normal", ap: 10, gx: 2, gy: 2}
 ];
@@ -309,6 +339,14 @@ const TILES = [
 /* 接続（線）: [マスID, マスID] */
 const EDGES = [
 ["S", "NW1"], ["NW1", "SG"], ["SG", "SZ1"], ["SG", "NW4"], ["NW4", "NW5"],
+["NW5", "ALL15A"], ["ALL15A", "SZ2"], ["ALL15A", "P10B"], ["P10B", "PLATE15"],
+["PLATE15", "GIFT15"], ["PLATE15", "P15C"], ["GIFT15", "P15A"], ["GIFT15", "P15E"],
+["P15E", "COIN30"], ["COIN30", "ALL20"], ["COIN30", "P9-8"],
+["P15A", "M30"], ["M30", "P15B"], ["P15B", "GIFT25"], ["P15B", "SG60"],
+["SG60", "P15D"], ["P15D", "HEART75"], ["P15D", "P20"],
+["GIFT25", "P7NE"], ["GIFT25", "P7NW"], ["P7NE", "SZ200"],
+["P9-8", "P9-7"], ["P9-7", "P9-6"], ["P9-6", "P9-5"], ["P9-5", "P9-4"],
+["P9-4", "P9-3"], ["P9-3", "P9-2"], ["P9-2", "P9-1"],
 ["S", "NE1"], ["NE1", "NE2"],
 ["S", "SW1"], ["SW1", "SW2"],
 ["S", "SE1"], ["SE1", "SE2"]
@@ -316,7 +354,10 @@ const EDGES = [
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
-{ from: "NW5", dx: -1, dy: -1},
+{ from: "SZ2", dx: -1, dy: 1},
+{ from: "P15C", dx: -1, dy: 1},
+{ from: "ALL20", dx: 0, dy: 1},
+{ from: "P7NW", dx: -1, dy: -1},
 { from: "NE2", dx: 1, dy: -1},
 { from: "SW2", dx: -1, dy: 1},
 { from: "SE2", dx: 1, dy: 1}
@@ -328,7 +369,10 @@ normal: "通常",
 song: "楽曲",
 shizuku: "しずく",
 all: "強化アイテム",
-event: "！マス（カード／プレート／ストーリー）"
+event: "！マス（カード／プレート／ストーリー）",
+gift: "プレゼント",
+coin: "金貨",
+money: "マニー"
 };
 
 const START_ID = "S";
@@ -363,7 +407,7 @@ if (!done.has(t.id) && dist[t.id] < best) { best = dist[t.id]; u = t.id;}
 if (u === null) break;
 done.add(u);
 for (const v of adj[u]) {
-const nd = dist[u] + byId[v].ap;
+const nd = dist[u] + (byId[v].ap || 0);
 if (nd < dist[v]) { dist[v] = nd; prev[v] = u;}
 }
 }
@@ -474,6 +518,31 @@ tx.textContent = "!";
 g.appendChild(d); g.appendChild(tx);
 return g;
 },
+gift: t => {
+const g = el("g", { "class": "icon"});
+const box = el("rect", { x: t.x - 15, y: t.y - 12, width: 30, height: 22, rx: 3, fill: "#ff9ec4", stroke: "#c94f7c", "stroke-width": "2"});
+const lid = el("rect", { x: t.x - 17, y: t.y - 17, width: 34, height: 7, rx: 3, fill: "#ffb9d4", stroke: "#c94f7c", "stroke-width": "2"});
+const ribbon = el("rect", { x: t.x - 3, y: t.y - 17, width: 6, height: 27, fill: "#e2547e"});
+const bowL = el("ellipse", { cx: t.x - 6, cy: t.y - 21, rx: 6, ry: 3.5, fill: "#ff7fab", stroke: "#c94f7c", "stroke-width": "1.5", transform: "rotate(-25 " + (t.x - 6) + " " + (t.y - 21) + ")"});
+const bowR = el("ellipse", { cx: t.x + 6, cy: t.y - 21, rx: 6, ry: 3.5, fill: "#ff7fab", stroke: "#c94f7c", "stroke-width": "1.5", transform: "rotate(25 " + (t.x + 6) + " " + (t.y - 21) + ")"});
+g.appendChild(box); g.appendChild(lid); g.appendChild(ribbon); g.appendChild(bowL); g.appendChild(bowR);
+return g;
+},
+coin: t => {
+const g = el("g", { "class": "icon"});
+const outer = el("circle", { cx: t.x, cy: t.y - 8, r: 15, fill: "#f6c945", stroke: "#b8860b", "stroke-width": "2.5"});
+const inner = el("circle", { cx: t.x, cy: t.y - 8, r: 9.5, fill: "none", stroke: "#b8860b", "stroke-width": "2"});
+g.appendChild(outer); g.appendChild(inner);
+return g;
+},
+money: t => {
+const g = el("g", { "class": "icon"});
+const c = el("circle", { cx: t.x, cy: t.y - 8, r: 15, fill: "#f6c945", stroke: "#b8860b", "stroke-width": "2.5"});
+const tx = el("text", { x: t.x, y: t.y - 2, "text-anchor": "middle", "font-size": "17", "font-weight": "900", fill: "#7a5200"});
+tx.textContent = "M";
+g.appendChild(c); g.appendChild(tx);
+return g;
+},
 start: t => {
 const tx = el("text", { x: t.x, y: t.y + 3, "class": "icon", "text-anchor": "middle", "font-size": "32", fill: "#ffffff", stroke: "#c22b4e", "stroke-width": "0.8"});
 tx.textContent = "★";
@@ -492,7 +561,7 @@ g.appendChild(el("polygon", { points: hexPoints(t.x, t.y, HEX_R), "class": "hex"
 g.appendChild(ICONS[t.type](t));
 if (t.type!== "start") {
 const cost = el("text", { x: t.x, y: t.y + 26, "class": "cost"});
-cost.textContent = t.ap + " ap";
+cost.textContent = t.ap === null ? "？ ap" : t.ap + " ap";
 g.appendChild(cost);
 } else {
 const cost = el("text", { x: t.x, y: t.y + 28, "class": "cost", "font-size": "13"});
@@ -531,7 +600,7 @@ else line.classList.remove("open");
 
 function refreshProgress() {
 const count = unlocked.size;
-const apSum = Array.from(unlocked).reduce((s, id) => s + byId[id].ap, 0);
+const apSum = Array.from(unlocked).reduce((s, id) => s + (byId[id].ap || 0), 0);
 document.getElementById("p-count").textContent = count;
 document.getElementById("p-total").textContent = TILES.length;
 document.getElementById("p-ap").textContent = apSum;
@@ -547,15 +616,20 @@ const t = byId[selectedId];
 const isOpen = unlocked.has(t.id);
 const isStart = t.type === "start";
 const total = ROUTE.dist[t.id];
+const reachable = isFinite(total);
 const route = routeNames(t.id).join(" → ");
 let html = "";
 html += "<h2>" + t.name + '<span class="badge ' + (isOpen? "open": "locked") + '">' + (isOpen? "解放済み": "未解放") + "</span></h2>";
 html += '<div class="d-grid">';
 html += '<div class="d-item"><div class="k">報酬の種類</div><div class="v">' + TYPE_LABEL[t.type] + "</div></div>";
-html += '<div class="d-item"><div class="k">必要ap</div><div class="v">' + (isStart? "―": t.ap + " <small>ap</small>") + "</div></div>";
-html += '<div class="d-item"><div class="k">スタートからの合計ap（最短経路）</div><div class="v">' + total + " <small>ap</small></div></div>";
+html += '<div class="d-item"><div class="k">必要ap</div><div class="v">' + (isStart? "―": (t.ap === null ? "不明" : t.ap + " <small>ap</small>")) + "</div></div>";
+html += '<div class="d-item"><div class="k">スタートからの合計ap（最短経路）</div><div class="v">' + (reachable ? total + " <small>ap</small>" : "―") + "</div></div>";
 html += "</div>";
+if (reachable) {
 html += '<p class="route">最短経路： <b>' + route + "</b></p>";
+} else {
+html += '<p class="route">接続先は未確認のため、経路はまだ分かりません。</p>';
+}
 if (!isStart) {
 html += '<button type="button" class="toggle' + (isOpen? " undo": "") + '" id="toggle-btn">' +
 (isOpen? "解放を取り消す": "解放済みにする") + "</button>";
@@ -581,7 +655,7 @@ renderDetail();
 
 /* ---------- パン＆ズーム ---------- */
 const view = { x: 0, y: 0, k: 1};
-const K_MIN = 0.55, K_MAX = 3.2;
+const K_MIN = 0.3, K_MAX = 3.2;
 function applyView() {
 viewport.setAttribute("transform", "translate(" + view.x + "," + view.y + ") scale(" + view.k + ")");
 }
