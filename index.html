@@ -343,12 +343,14 @@ const TILES = [
 { id: "B40K", name: "左下8", type: "event", ap: 40, gx: -6, gy: 4},
 { id: "M30K", name: "左下9", type: "money", ap: 30, gx: -6, gy: 6},
 { id: "P15K3", name: "左下10", type: "normal", ap: 15, gx: -7, gy: 7},
-{ id: "P15K4", name: "左下12", type: "normal", ap: 15, gx: -10, gy: 5},
-{ id: "P15K5", name: "左下13", type: "normal", ap: 15, gx: -9, gy: 5},
-{ id: "ALL15K", name: "左下11", type: "all", ap: 15, gx: -8, gy: 6},
+{ id: "P15K4", name: "左下11", type: "normal", ap: 15, gx: -5, gy: 7},
+{ id: "P15K5", name: "左下12", type: "normal", ap: 15, gx: -4, gy: 6},
+{ id: "ALL15K", name: "左下13", type: "all", ap: 15, gx: -3, gy: 5},
 { id: "B300K2", name: "左下25", type: "event", ap: 300, gx: -10, gy: 6},
 { id: "G15K", name: "左下26", type: "gift", ap: 15, gx: -9, gy: 4},
 { id: "P15K8", name: "左下27", type: "normal", ap: 15, gx: -9, gy: 3},
+{ id: "ALL15K2", name: "左下28", type: "all", ap: 15, gx: -8, gy: 6},
+{ id: "P15K9", name: "左下29", type: "normal", ap: 15, gx: -9, gy: 5},
 { id: "SE1", name: "右下1", type: "normal", ap: 10, gx: 1, gy: 1},
 { id: "SE2", name: "右下2", type: "normal", ap: 10, gx: 2, gy: 2},
 { id: "ALL30K2", name: "左下14", type: "all", ap: 30, gx: -11, gy: 11},
@@ -379,8 +381,8 @@ const EDGES = [
 ["S", "NE1"], ["NE1", "NE2"],
 ["S", "SW1"], ["SW1", "SW2"], ["SW2", "K15"], ["K15", "P10K1"], ["K15", "P10K2"],
 ["P10K1", "P15NP"], ["P10K2", "SZ100K"], ["P15NP", "B40K"],
-["M30K", "P15NP"], ["M30K", "P15K3"], ["P15K3", "ALL15K"], ["P15K4", "P15K5"], ["P15K5", "ALL15K"],
-["P15K5", "B300K2"], ["P15K5", "G15K"], ["G15K", "P15K8"],
+["M30K", "P15NP"], ["M30K", "P15K3"], ["M30K", "P15K4"], ["P15K4", "P15K5"], ["P15K5", "ALL15K"],
+["P15K3", "ALL15K2"], ["ALL15K2", "P15K9"], ["P15K9", "B300K2"], ["P15K9", "G15K"], ["G15K", "P15K8"],
 ["S", "SE1"], ["SE1", "SE2"],
 ["P15K3", "ALL30K2"], ["ALL30K2", "P20K1"], ["P20K1", "COIN50"], ["COIN50", "P20K2"],
 ["P20K2", "ALL30K3"], ["COIN50", "M60K2"], ["M60K2", "P20K3"], ["P20K3", "G75K1"],
@@ -390,6 +392,7 @@ const EDGES = [
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
 { from: "NE2", dx: 1, dy: -1},
+{ from: "ALL15K", dx: 1, dy: 1},
 { from: "SZ100K", dx: 1, dy: 1},
 { from: "SE2", dx: 1, dy: 1}
 ];
