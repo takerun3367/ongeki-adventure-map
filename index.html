@@ -250,7 +250,7 @@ background: var(--c, #ccc);
 <div class="wrap">
 <div class="map-card">
 <div class="map-frame">
-<svg id="map" viewBox="-1180 -1962 2130 3340" role="application" aria-label="アドベンチャーマップ"></svg>
+<svg id="map" viewBox="-1180 -1962 2130 3920" role="application" aria-label="アドベンチャーマップ"></svg>
 </div>
 <div class="zoom-ctl">
 <button type="button" id="zoom-in" aria-label="拡大">＋</button>
@@ -347,7 +347,18 @@ const TILES = [
 { id: "P15K5", name: "左下12", type: "normal", ap: 15, gx: -4, gy: 6},
 { id: "ALL15K", name: "左下13", type: "all", ap: 15, gx: -3, gy: 5},
 { id: "SE1", name: "右下1", type: "normal", ap: 10, gx: 1, gy: 1},
-{ id: "SE2", name: "右下2", type: "normal", ap: 10, gx: 2, gy: 2}
+{ id: "SE2", name: "右下2", type: "normal", ap: 10, gx: 2, gy: 2},
+{ id: "ALL30K2", name: "左下14", type: "all", ap: 30, gx: -8, gy: 8},
+{ id: "P20K1", name: "左下15", type: "normal", ap: 20, gx: -8, gy: 9},
+{ id: "COIN50", name: "左下16", type: "coin", ap: 50, gx: -8, gy: 10},
+{ id: "P20K2", name: "左下17", type: "normal", ap: 20, gx: -8, gy: 11},
+{ id: "ALL30K3", name: "左下18", type: "all", ap: 30, gx: -8, gy: 12},
+{ id: "M60K2", name: "左下19", type: "money", ap: 60, gx: -9, gy: 10},
+{ id: "P20K3", name: "左下20", type: "normal", ap: 20, gx: -10, gy: 10},
+{ id: "G75K1", name: "左下21", type: "gift", ap: 75, gx: -10, gy: 9},
+{ id: "SZ500K1", name: "左下22", type: "shizuku", ap: 500, gx: -10, gy: 8},
+{ id: "G75K2", name: "左下23", type: "gift", ap: 75, gx: -10, gy: 11},
+{ id: "SZ500K2", name: "左下24", type: "shizuku", ap: 500, gx: -10, gy: 12}
 ];
 
 /* 接続（線）: [マスID, マスID] */
@@ -366,14 +377,16 @@ const EDGES = [
 ["S", "SW1"], ["SW1", "SW2"], ["SW2", "K15"], ["K15", "P10K1"], ["K15", "P10K2"],
 ["P10K1", "P15NP"], ["P10K2", "SZ100K"], ["P15NP", "B40K"], ["P15NP", "M30K"],
 ["M30K", "P15K3"], ["M30K", "P15K4"], ["P15K4", "P15K5"], ["P15K5", "ALL15K"],
-["S", "SE1"], ["SE1", "SE2"]
+["S", "SE1"], ["SE1", "SE2"],
+["P15K3", "ALL30K2"], ["ALL30K2", "P20K1"], ["P20K1", "COIN50"], ["COIN50", "P20K2"],
+["P20K2", "ALL30K3"], ["COIN50", "M60K2"], ["M60K2", "P20K3"], ["P20K3", "G75K1"],
+["G75K1", "SZ500K1"], ["P20K3", "G75K2"], ["G75K2", "SZ500K2"]
 ];
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
 { from: "NE2", dx: 1, dy: -1},
 { from: "SZ100K", dx: 1, dy: 1},
-{ from: "P15K3", dx: -1, dy: 1},
 { from: "ALL15K", dx: 1, dy: 1},
 { from: "SE2", dx: 1, dy: 1}
 ];
