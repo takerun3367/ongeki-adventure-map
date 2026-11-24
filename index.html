@@ -250,7 +250,7 @@ background: var(--c, #ccc);
 <div class="wrap">
 <div class="map-card">
 <div class="map-frame">
-<svg id="map" viewBox="-1180 -1962 2130 2698" role="application" aria-label="アドベンチャーマップ"></svg>
+<svg id="map" viewBox="-1180 -1962 2130 2970" role="application" aria-label="アドベンチャーマップ"></svg>
 </div>
 <div class="zoom-ctl">
 <button type="button" id="zoom-in" aria-label="拡大">＋</button>
@@ -289,7 +289,7 @@ background: var(--c, #ccc);
 /* ============================================================
 マップデータ（写真から読み取ったマスをここに追加・修正する）
 gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
-type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券）
 ap: null は ap不明（合計計算では 0 として扱う）
 ============================================================ */
 const TILES = [
@@ -335,6 +335,9 @@ const TILES = [
 { id: "NE2", name: "右上2", type: "normal", ap: 10, gx: 2, gy: -2},
 { id: "SW1", name: "左下1", type: "normal", ap: 10, gx: -1, gy: 1},
 { id: "SW2", name: "左下2", type: "all", ap: 15, gx: -2, gy: 2},
+{ id: "K15", name: "左下3", type: "ticket", ap: 15, gx: -3, gy: 3},
+{ id: "P10K1", name: "左下4", type: "normal", ap: 10, gx: -4, gy: 4},
+{ id: "P10K2", name: "左下5", type: "normal", ap: 10, gx: -2, gy: 4},
 { id: "SE1", name: "右下1", type: "normal", ap: 10, gx: 1, gy: 1},
 { id: "SE2", name: "右下2", type: "normal", ap: 10, gx: 2, gy: 2}
 ];
@@ -352,14 +355,15 @@ const EDGES = [
 ["P9-8", "P9-7"], ["P9-7", "P9-6"], ["P9-6", "P9-5"], ["P9-5", "P9-4"],
 ["P9-4", "P9-3"], ["P9-3", "P9-2"], ["P9-2", "P9-1"],
 ["S", "NE1"], ["NE1", "NE2"],
-["S", "SW1"], ["SW1", "SW2"],
+["S", "SW1"], ["SW1", "SW2"], ["SW2", "K15"], ["K15", "P10K1"], ["K15", "P10K2"],
 ["S", "SE1"], ["SE1", "SE2"]
 ];
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
 { from: "NE2", dx: 1, dy: -1},
-{ from: "SW2", dx: -1, dy: 1},
+{ from: "P10K1", dx: -1, dy: 1},
+{ from: "P10K2", dx: 1, dy: 1},
 { from: "SE2", dx: 1, dy: 1}
 ];
 
@@ -372,7 +376,8 @@ all: "強化アイテム",
 event: "！マス（カード／プレート／ストーリー）",
 gift: "プレゼント",
 coin: "金貨",
-money: "マニー"
+money: "マニー",
+ticket: "券"
 };
 
 const START_ID = "S";
@@ -541,6 +546,17 @@ const c = el("circle", { cx: t.x, cy: t.y - 8, r: 15, fill: "#f6c945", stroke: "
 const tx = el("text", { x: t.x, y: t.y - 2, "text-anchor": "middle", "font-size": "17", "font-weight": "900", fill: "#7a5200"});
 tx.textContent = "M";
 g.appendChild(c); g.appendChild(tx);
+return g;
+},
+ticket: t => {
+const g = el("g", { "class": "icon"});
+const body = el("rect", { x: t.x - 21, y: t.y - 21, width: 42, height: 26, rx: 4, fill: "#ffd3e6", stroke: "#d6336c", "stroke-width": "2"});
+const notchT = el("circle", { cx: t.x + 9, cy: t.y - 21, r: 3.5, fill: "#ffd3e6", stroke: "#d6336c", "stroke-width": "1.5"});
+const notchB = el("circle", { cx: t.x + 9, cy: t.y + 5, r: 3.5, fill: "#ffd3e6", stroke: "#d6336c", "stroke-width": "1.5"});
+const perf = el("line", { x1: t.x + 9, y1: t.y - 18, x2: t.x + 9, y2: t.y + 2, stroke: "#d6336c", "stroke-width": "1.8", "stroke-dasharray": "3 3"});
+const tx = el("text", { x: t.x - 6, y: t.y - 2, "text-anchor": "middle", "font-size": "16", "font-weight": "900", fill: "#b0255a"});
+tx.textContent = "券";
+g.appendChild(body); g.appendChild(notchT); g.appendChild(notchB); g.appendChild(perf); g.appendChild(tx);
 return g;
 },
 start: t => {
