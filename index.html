@@ -317,6 +317,11 @@ const TILES = [
 { id: "P20", name: "左上22", type: "normal", ap: 20, gx: -2, gy: -10},
 { id: "SZ200", name: "左上24", type: "shizuku", ap: 200, gx: -1, gy: -11},
 { id: "BANGX", name: "左上26", type: "event", ap: null, gx: -1, gy: -15},
+{ id: "ALL20N", name: "左上35", type: "all", ap: 20, gx: -4, gy: -8},
+{ id: "A1F", name: "左上36", type: "normal", ap: null, gx: -5, gy: -7},
+{ id: "A2F", name: "左上37", type: "normal", ap: null, gx: -4, gy: -6},
+{ id: "ALL30N", name: "左上38", type: "all", ap: 30, gx: -5, gy: -8},
+{ id: "B300A", name: "左上39", type: "event", ap: 300, gx: -2, gy: -7},
 { id: "P9-8", name: "左上27", type: "all", ap: 30, gx: -10, gy: -14},
 { id: "P9-7", name: "左上28", type: "normal", ap: 20, gx: -10, gy: -15},
 { id: "P9-6", name: "左上29", type: "shizuku", ap: 100, gx: -10, gy: -16},
@@ -341,6 +346,7 @@ const EDGES = [
 ["P15E", "COIN30"], ["COIN30", "ALL20"], ["COIN30", "P9-8"],
 ["P15A", "M30"], ["M30", "P15B"], ["P15B", "GIFT25"], ["P15B", "SG60"],
 ["SG60", "P15D"], ["P15D", "HEART75"], ["P15D", "P20"],
+["P15D", "ALL20N"], ["ALL20N", "A1F"], ["A1F", "A2F"], ["A1F", "ALL30N"], ["HEART75", "B300A"],
 ["P20", "SZ200"],
 ["P9-8", "P9-7"], ["P9-7", "P9-6"], ["P9-6", "P9-5"], ["P9-5", "P9-4"],
 ["P9-4", "P9-3"], ["P9-3", "P9-2"], ["P9-2", "P9-1"],
@@ -352,6 +358,8 @@ const EDGES = [
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
 { from: "SZ2", dx: -1, dy: 1},
+{ from: "A2F", dx: 1, dy: -1},
+{ from: "HEART75", dx: -1, dy: 1},
 { from: "ALL20", dx: 0, dy: 1},
 { from: "NE2", dx: 1, dy: -1},
 { from: "SW2", dx: -1, dy: 1},
