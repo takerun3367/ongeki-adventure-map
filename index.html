@@ -289,7 +289,7 @@ background: var(--c, #ccc);
 /* ============================================================
 マップデータ（写真から読み取ったマスをここに追加・修正する）
 gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
-type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート） | key（鍵）
 ap: null は ap不明（合計計算では 0 として扱う）
 ============================================================ */
 const TILES = [
@@ -364,8 +364,10 @@ const TILES = [
 { id: "B300K2", name: "左下27", type: "event", ap: 300, gx: -10, gy: 6},
 { id: "G15K", name: "左下28", type: "gift", ap: 15, gx: -9, gy: 4},
 { id: "P15K8", name: "左下29", type: "normal", ap: 15, gx: -9, gy: 3},
-{ id: "P30K1", name: "左下30", type: "normal", ap: 30, gx: -10, gy: 2},
-{ id: "P30K2", name: "左下31", type: "normal", ap: 30, gx: -8, gy: 2}
+{ id: "P30K1", name: "左下30", type: "key", ap: 30, gx: -10, gy: 2},
+{ id: "P30K2", name: "左下31", type: "all", ap: 30, gx: -8, gy: 2},
+{ id: "SZ200K3", name: "左下32", type: "shizuku", ap: 200, gx: -7, gy: 1},
+{ id: "B300K4", name: "左下33", type: "event", ap: 300, gx: -6, gy: 2}
 ];
 
 /* 接続（線）: [マスID, マスID] */
@@ -389,7 +391,8 @@ const EDGES = [
 ["P20K2", "ALL30K3"], ["COIN50", "M60K2"], ["M60K2", "P20K3"], ["P20K3", "G75K1"],
 ["G75K1", "SZ500K1"], ["P20K3", "G75K2"], ["G75K2", "SZ500K2"],
 ["P15K3", "ALL15K2"], ["ALL15K2", "P15K9"], ["P15K9", "B300K2"], ["P15K9", "G15K"], ["G15K", "P15K8"],
-["P15K8", "P30K1"], ["P15K8", "P30K2"]
+["P15K8", "P30K1"], ["P15K8", "P30K2"],
+["P30K2", "SZ200K3"], ["SZ200K3", "B300K4"]
 ];
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
@@ -411,7 +414,8 @@ gift: "プレゼント",
 coin: "金貨",
 money: "マニー",
 ticket: "券",
-plate: "ネームプレート"
+plate: "ネームプレート",
+key: "鍵"
 };
 
 const START_ID = "S";
@@ -600,6 +604,16 @@ const inner = el("rect", { x: t.x - 21, y: t.y - 16, width: 42, height: 18, rx: 
 const dotL = el("circle", { cx: t.x - 17, cy: t.y - 7, r: 1.8, fill: "#b8860b"});
 const dotR = el("circle", { cx: t.x + 17, cy: t.y - 7, r: 1.8, fill: "#b8860b"});
 g.appendChild(body); g.appendChild(inner); g.appendChild(dotL); g.appendChild(dotR);
+return g;
+},
+key: t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ")"});
+const bow = el("circle", { cx: -8, cy: -8, r: 8.5, fill: "#bfe3ff", stroke: "#1a6fc4", "stroke-width": "3"});
+const hole = el("circle", { cx: -8, cy: -8, r: 3, fill: "#1a6fc4"});
+const shaft = el("line", { x1: -2, y1: -2, x2: 13, y2: 13, stroke: "#1a6fc4", "stroke-width": "4.5", "stroke-linecap": "round"});
+const tooth1 = el("line", { x1: 13, y1: 13, x2: 13, y2: 6, stroke: "#1a6fc4", "stroke-width": "4", "stroke-linecap": "round"});
+const tooth2 = el("line", { x1: 8, y1: 8, x2: 14, y2: 8, stroke: "#1a6fc4", "stroke-width": "4", "stroke-linecap": "round"});
+g.appendChild(shaft); g.appendChild(tooth1); g.appendChild(tooth2); g.appendChild(bow); g.appendChild(hole);
 return g;
 },
 start: t => {
