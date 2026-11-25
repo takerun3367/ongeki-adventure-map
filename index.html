@@ -289,7 +289,7 @@ background: var(--c, #ccc);
 /* ============================================================
 マップデータ（写真から読み取ったマスをここに追加・修正する）
 gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
-type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート） | key（鍵）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート） | key（鍵） | lock（鍵の掛かった扉）
 ap: null は ap不明（合計計算では 0 として扱う）
 ============================================================ */
 const TILES = [
@@ -371,7 +371,9 @@ const TILES = [
 { id: "SZ100N1", name: "左下34", type: "shizuku", ap: 100, gx: -2, gy: 6},
 { id: "P15N1", name: "左下35", type: "normal", ap: 15, gx: -2, gy: 8},
 { id: "SG240", name: "左下36", type: "song", ap: 240, gx: -3, gy: 9},
-{ id: "G150N", name: "左下37", type: "gift", ap: 150, gx: -4, gy: 10}
+{ id: "G150N", name: "左下37", type: "gift", ap: 150, gx: -4, gy: 10},
+{ id: "LOCK30", name: "左下38", type: "lock", ap: 30, gx: 0, gy: 6},
+{ id: "P20N1", name: "左下39", type: "normal", ap: 20, gx: 0, gy: 7}
 ];
 
 /* 接続（線）: [マスID, マスID] */
@@ -398,13 +400,14 @@ const EDGES = [
 ["P15K8", "P30K1"], ["P15K8", "P30K2"],
 ["P30K2", "SZ200K3"], ["SZ200K3", "B300K4"],
 ["ALL15K", "SZ100N1"], ["ALL15K", "P15N1"], ["P15N1", "SG240"],
-["SG240", "G150N"]
+["SG240", "G150N"],
+["SZ100K", "LOCK30"], ["LOCK30", "P20N1"]
 ];
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
 { from: "NE2", dx: 1, dy: -1},
-{ from: "SZ100K", dx: 1, dy: 1},
+{ from: "P20N1", dx: 0, dy: 1},
 { from: "SE2", dx: 1, dy: 1}
 ];
 
@@ -420,7 +423,8 @@ coin: "金貨",
 money: "マニー",
 ticket: "券",
 plate: "ネームプレート",
-key: "鍵"
+key: "鍵",
+lock: "鍵の掛かった扉"
 };
 
 const START_ID = "S";
@@ -619,6 +623,15 @@ const shaft = el("line", { x1: -2, y1: -2, x2: 13, y2: 13, stroke: "#1a6fc4", "s
 const tooth1 = el("line", { x1: 13, y1: 13, x2: 13, y2: 6, stroke: "#1a6fc4", "stroke-width": "4", "stroke-linecap": "round"});
 const tooth2 = el("line", { x1: 8, y1: 8, x2: 14, y2: 8, stroke: "#1a6fc4", "stroke-width": "4", "stroke-linecap": "round"});
 g.appendChild(shaft); g.appendChild(tooth1); g.appendChild(tooth2); g.appendChild(bow); g.appendChild(hole);
+return g;
+},
+lock: t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ")"});
+const shackle = el("path", { d: "M-9,0 L-9,-8 A9,9 0 0 1 9,-8 L9,0", fill: "none", stroke: "#7a5200", "stroke-width": "4.5", "stroke-linecap": "round"});
+const body = el("rect", { x: -14, y: -2, width: 28, height: 22, rx: 4, fill: "#e0a83c", stroke: "#7a5200", "stroke-width": "2.5"});
+const hole = el("circle", { cx: 0, cy: 6, r: 3.6, fill: "#5c3d00"});
+const slot = el("rect", { x: -1.8, y: 6, width: 3.6, height: 7, rx: 1.8, fill: "#5c3d00"});
+g.appendChild(shackle); g.appendChild(body); g.appendChild(hole); g.appendChild(slot);
 return g;
 },
 start: t => {
