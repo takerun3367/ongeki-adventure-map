@@ -441,7 +441,8 @@ const TILES = [
 { id: "SG240", name: "左下36", type: "song", ap: 240, gx: -3, gy: 9},
 { id: "G150N", name: "左下37", type: "gift", ap: 150, gx: -4, gy: 10},
 { id: "LOCK30", name: "左下38", type: "lock", ap: 30, gx: 0, gy: 6},
-{ id: "P20N1", name: "左下39", type: "normal", ap: 20, gx: 0, gy: 9}
+{ id: "P20N1", name: "左下39", type: "normal", ap: 20, gx: 0, gy: 9},
+{ id: "B40N", name: "左下40", type: "event", ap: 40, gx: 0, gy: 13}
 ];
 
 /* 接続（線）: [マスID, マスID] */
@@ -479,7 +480,7 @@ const EDGES = [
 ["P30K2", "SZ200K3"], ["SZ200K3", "B300K4"],
 ["ALL15K", "SZ100N1"], ["ALL15K", "P15N1"], ["P15N1", "SG240"],
 ["SG240", "G150N"],
-["SZ100K", "LOCK30"], ["LOCK30", "P20N1"],
+["SZ100K", "LOCK30"], ["LOCK30", "P20N1"], ["P20N1", "B40N"],
 ["LOCKSE", "FLWA"], ["FLWA", "FLWB"], ["FLWB", "COIN50S"], ["FLWB", "FLWC"], ["FLWC", "SSR50S"], ["FLWC", "B40S"], ["B40S", "LOCK30S"], ["LOCK30S", "FLWD"], ["FLWD", "SZ100S"], ["SZ100S", "KEY30S"],
 ["LOCKSE", "P20S1"],
 ["P20S1", "SZ200S1"], ["SZ200S1", "P20S2"], ["P20S2", "B350S"], ["B350S", "SZ200S2"], ["SZ200S2", "G150S"], ["G150S", "P20S3"], ["P20S3", "SZ500S2"], ["SZ500S2", "ALL50S"], ["ALL50S", "B300S"], ["B300S", "SZ500S1"], ["SZ500S1", "P20S4"], ["P20S4", "P20S1"]
@@ -487,7 +488,7 @@ const EDGES = [
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
-{ from: "P20N1", dx: 0, dy: 1}
+{ from: "B40N", dx: 0, dy: 1}
 ];
 
 const TYPE_LABEL = {
