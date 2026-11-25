@@ -289,7 +289,7 @@ background: var(--c, #ccc);
 /* ============================================================
 マップデータ（写真から読み取ったマスをここに追加・修正する）
 gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
-type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート） | key（鍵） | lock（鍵の掛かった扉） | jewel（宝石）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート） | key（鍵） | lock（鍵の掛かった扉） | jewel（宝石） | card（カード）
 ap: null は ap不明（合計計算では 0 として扱う）
 ============================================================ */
 const TILES = [
@@ -406,6 +406,13 @@ const TILES = [
 { id: "B300S", name: "右下22", type: "event", ap: 300, gx: 17, gy: 11},
 { id: "SZ500S1", name: "右下23", type: "shizuku", ap: 500, gx: 17, gy: 10},
 { id: "P20S4", name: "右下24", type: "normal", ap: 20, gx: 15, gy: 9},
+{ id: "FLWA", name: "右下25", type: "normal", ap: null, gx: 7, gy: 7},
+{ id: "FLWB", name: "右下26", type: "normal", ap: null, gx: 6, gy: 8},
+{ id: "COIN50S", name: "右下27", type: "coin", ap: 50, gx: 5, gy: 7},
+{ id: "FLWC", name: "右下28", type: "normal", ap: null, gx: 6, gy: 9},
+{ id: "SSR50S", name: "右下29", type: "card", ap: 50, gx: 5, gy: 10},
+{ id: "B40S", name: "右下30", type: "event", ap: 40, gx: 7, gy: 10},
+{ id: "LOCK30S", name: "右下31", type: "lock", ap: 30, gx: 8, gy: 11},
 { id: "ALL30K2", name: "左下14", type: "all", ap: 30, gx: -11, gy: 11},
 { id: "P20K1", name: "左下15", type: "normal", ap: 20, gx: -11, gy: 12},
 { id: "COIN50", name: "左下16", type: "coin", ap: 50, gx: -11, gy: 13},
@@ -470,13 +477,15 @@ const EDGES = [
 ["ALL15K", "SZ100N1"], ["ALL15K", "P15N1"], ["P15N1", "SG240"],
 ["SG240", "G150N"],
 ["SZ100K", "LOCK30"], ["LOCK30", "P20N1"],
+["LOCKSE", "FLWA"], ["FLWA", "FLWB"], ["FLWB", "COIN50S"], ["FLWB", "FLWC"], ["FLWC", "SSR50S"], ["FLWC", "B40S"], ["B40S", "LOCK30S"],
 ["LOCKSE", "P20S1"],
 ["P20S1", "SZ200S1"], ["SZ200S1", "P20S2"], ["P20S2", "B350S"], ["B350S", "SZ200S2"], ["SZ200S2", "G150S"], ["G150S", "P20S3"], ["P20S3", "SZ500S2"], ["SZ500S2", "ALL50S"], ["ALL50S", "B300S"], ["B300S", "SZ500S1"], ["SZ500S1", "P20S4"], ["P20S4", "P20S1"]
 ];
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
-{ from: "P20N1", dx: 0, dy: 1}
+{ from: "P20N1", dx: 0, dy: 1},
+{ from: "LOCK30S", dx: -1, dy: 1}
 ];
 
 const TYPE_LABEL = {
@@ -493,7 +502,8 @@ ticket: "券",
 plate: "ネームプレート",
 key: "鍵",
 lock: "鍵の掛かった扉",
-jewel: "宝石"
+jewel: "宝石",
+card: "カード（SSR確定）"
 };
 
 const START_ID = "S";
@@ -714,6 +724,17 @@ const facet4 = el("line", { x1: -4, y1: -11, x2: 0, y2: 15, stroke: "#7e22ce", "
 const facet5 = el("line", { x1: 4, y1: -11, x2: 0, y2: 15, stroke: "#7e22ce", "stroke-width": "1.4", opacity: "0.8"});
 const shine = el("circle", { cx: -6, cy: -4, r: 2.4, fill: "#ffffff", opacity: "0.85"});
 g.appendChild(body); g.appendChild(top); g.appendChild(facet1); g.appendChild(facet2); g.appendChild(facet3); g.appendChild(facet4); g.appendChild(facet5); g.appendChild(shine);
+return g;
+},
+card: t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ")"});
+const body = el("rect", { x: -15, y: -20, width: 30, height: 38, rx: 4, fill: "#fdf4ff", stroke: "#9333ea", "stroke-width": "2.5"});
+const inner = el("rect", { x: -11, y: -16, width: 22, height: 30, rx: 2, fill: "none", stroke: "#c084fc", "stroke-width": "1.4"});
+const star = el("text", { x: 0, y: -2, "text-anchor": "middle", "font-size": "15", fill: "#9333ea"});
+star.textContent = "★";
+const tx = el("text", { x: 0, y: 11, "text-anchor": "middle", "font-size": "10.5", "font-weight": "900", fill: "#7e22ce"});
+tx.textContent = "SSR";
+g.appendChild(body); g.appendChild(inner); g.appendChild(star); g.appendChild(tx);
 return g;
 },
 start: t => {
