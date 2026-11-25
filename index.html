@@ -370,11 +370,7 @@ const TILES = [
 { id: "B300K4", name: "左下33", type: "event", ap: 300, gx: -6, gy: 2},
 { id: "SZ100N1", name: "左下34", type: "shizuku", ap: 100, gx: -2, gy: 6},
 { id: "P15N1", name: "左下35", type: "normal", ap: 15, gx: -2, gy: 8},
-{ id: "SG240", name: "左下36", type: "song", ap: 240, gx: -3, gy: 9},
-{ id: "P15N2", name: "左下37", type: "normal", ap: null, gx: -5, gy: 4},
-{ id: "P15N3", name: "左下38", type: "normal", ap: null, gx: -4, gy: 3},
-{ id: "P10N1", name: "左下39", type: "normal", ap: 10, gx: -3, gy: 2},
-{ id: "SZ100N2", name: "左下40", type: "shizuku", ap: 100, gx: -2, gy: 3}
+{ id: "SG240", name: "左下36", type: "song", ap: 240, gx: -3, gy: 9}
 ];
 
 /* 接続（線）: [マスID, マスID] */
@@ -400,8 +396,7 @@ const EDGES = [
 ["P15K3", "ALL15K2"], ["ALL15K2", "P15K9"], ["P15K9", "B300K2"], ["P15K9", "G15K"], ["G15K", "P15K8"],
 ["P15K8", "P30K1"], ["P15K8", "P30K2"],
 ["P30K2", "SZ200K3"], ["SZ200K3", "B300K4"],
-["ALL15K", "SZ100N1"], ["ALL15K", "P15N1"], ["P15N1", "SG240"],
-["P15K5", "P15N2"], ["P15N2", "P15N3"], ["P15N3", "P10N1"], ["P10N1", "SZ100N2"]
+["ALL15K", "SZ100N1"], ["ALL15K", "P15N1"], ["P15N1", "SG240"]
 ];
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
@@ -409,7 +404,6 @@ const FRONTIER = [
 { from: "NE2", dx: 1, dy: -1},
 { from: "SZ100K", dx: 1, dy: 1},
 { from: "SG240", dx: -1, dy: 1},
-{ from: "SZ100N2", dx: 1, dy: 1},
 { from: "SE2", dx: 1, dy: 1}
 ];
 
