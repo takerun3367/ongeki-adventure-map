@@ -250,7 +250,7 @@ background: var(--c, #ccc);
 <div class="wrap">
 <div class="map-card">
 <div class="map-frame">
-<svg id="map" viewBox="-1300 -1962 2780 4260" role="application" aria-label="アドベンチャーマップ"></svg>
+<svg id="map" viewBox="-1300 -1962 3400 4900" role="application" aria-label="アドベンチャーマップ"></svg>
 </div>
 <div class="zoom-ctl">
 <button type="button" id="zoom-in" aria-label="拡大">＋</button>
@@ -355,6 +355,9 @@ const TILES = [
 { id: "M30SE", name: "右下7", type: "money", ap: 30, gx: 6, gy: 4},
 { id: "P10SE2", name: "右下8", type: "normal", ap: 10, gx: 7, gy: 3},
 { id: "P15SE", name: "右下9", type: "normal", ap: 15, gx: 7, gy: 5},
+{ id: "SG60SE", name: "右下10", type: "song", ap: 60, gx: 8, gy: 2},
+{ id: "G150SE2", name: "右下11", type: "gift", ap: 150, gx: 9, gy: 3},
+{ id: "LOCKSE", name: "右下12", type: "lock", ap: null, gx: 8, gy: 6},
 { id: "ALL30K2", name: "左下14", type: "all", ap: 30, gx: -11, gy: 11},
 { id: "P20K1", name: "左下15", type: "normal", ap: 20, gx: -11, gy: 12},
 { id: "COIN50", name: "左下16", type: "coin", ap: 50, gx: -11, gy: 13},
@@ -401,6 +404,7 @@ const EDGES = [
 ["M30K", "P15K3"], ["M30K", "P15K4"], ["P15K4", "P15K5"], ["P15K5", "ALL15K"],
 ["S", "SE1"], ["SE1", "SE2"], ["SE2", "SE3"], ["SE3", "P10SE"], ["P10SE", "G15SE"], ["SE3", "B300SE"],
 ["G15SE", "M30SE"], ["M30SE", "P10SE2"], ["M30SE", "P15SE"],
+["P10SE2", "SG60SE"], ["SG60SE", "G150SE2"], ["P15SE", "LOCKSE"],
 ["P15K3", "ALL30K2"], ["ALL30K2", "P20K1"], ["P20K1", "COIN50"], ["COIN50", "P20K2"],
 ["P20K2", "ALL30K3"], ["COIN50", "M60K2"], ["M60K2", "P20K3"], ["P20K3", "G75K1"],
 ["G75K1", "SZ500K1"], ["P20K3", "G75K2"], ["G75K2", "SZ500K2"],
@@ -415,9 +419,7 @@ const EDGES = [
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
 { from: "NE2", dx: 1, dy: -1},
-{ from: "P20N1", dx: 0, dy: 1},
-{ from: "P10SE2", dx: 1, dy: -1},
-{ from: "P15SE", dx: 1, dy: 1}
+{ from: "P20N1", dx: 0, dy: 1}
 ];
 
 const TYPE_LABEL = {
