@@ -322,14 +322,14 @@ const TILES = [
 { id: "B300F", name: "左上29", type: "event", ap: 300, gx: -12, gy: -4},
 { id: "M60F", name: "左上28", type: "money", ap: 60, gx: -12, gy: -2},
 { id: "SZ200F", name: "左上32", type: "shizuku", ap: 200, gx: -12, gy: -1},
-{ id: "P9-8", name: "左上18", type: "all", ap: 30, gx: -17, gy: -14},
-{ id: "P9-7", name: "左上22", type: "normal", ap: 20, gx: -17, gy: -15},
-{ id: "P9-6", name: "左上25", type: "shizuku", ap: 100, gx: -17, gy: -16},
-{ id: "P9-5", name: "左上30", type: "money", ap: 60, gx: -16, gy: -17},
-{ id: "P9-4", name: "左上33", type: "all", ap: 50, gx: -15, gy: -18},
-{ id: "P9-3", name: "左上34", type: "gift", ap: 150, gx: -15, gy: -19},
-{ id: "P9-2", name: "左上35", type: "event", ap: 300, gx: -17, gy: -19},
-{ id: "P9-1", name: "左上36", type: "shizuku", ap: 500, gx: -19, gy: -19},
+{ id: "P9-8", name: "左上18", type: "all", ap: 30, gx: -13, gy: -10},
+{ id: "P9-7", name: "左上22", type: "normal", ap: 20, gx: -13, gy: -11},
+{ id: "P9-6", name: "左上25", type: "shizuku", ap: 100, gx: -13, gy: -12},
+{ id: "P9-5", name: "左上30", type: "money", ap: 60, gx: -12, gy: -13},
+{ id: "P9-4", name: "左上33", type: "all", ap: 50, gx: -11, gy: -14},
+{ id: "P9-3", name: "左上34", type: "gift", ap: 150, gx: -11, gy: -15},
+{ id: "P9-2", name: "左上35", type: "event", ap: 300, gx: -13, gy: -15},
+{ id: "P9-1", name: "左上36", type: "shizuku", ap: 500, gx: -15, gy: -15},
 { id: "NE1", name: "右上1", type: "normal", ap: 10, gx: 1, gy: -1},
 { id: "NE2", name: "右上2", type: "all", ap: 15, gx: 2, gy: -2},
 { id: "NE3", name: "右上3", type: "normal", ap: 10, gx: 3, gy: -3},
@@ -856,7 +856,7 @@ renderDetail();
 
 /* ---------- パン＆ズーム ---------- */
 const view = { x: 0, y: 0, k: 1};
-const K_MIN = 0.3, K_MAX = 3.2;
+const K_MIN = 0.3, K_MAX = 5;
 function applyView() {
 viewport.setAttribute("transform", "translate(" + view.x + "," + view.y + ") scale(" + view.k + ")");
 }
