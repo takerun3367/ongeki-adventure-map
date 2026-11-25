@@ -250,7 +250,7 @@ background: var(--c, #ccc);
 <div class="wrap">
 <div class="map-card">
 <div class="map-frame">
-<svg id="map" viewBox="-1300 -1962 3720 4900" role="application" aria-label="アドベンチャーマップ"></svg>
+<svg id="map" viewBox="-1300 -1962 4500 4900" role="application" aria-label="アドベンチャーマップ"></svg>
 </div>
 <div class="zoom-ctl">
 <button type="button" id="zoom-in" aria-label="拡大">＋</button>
@@ -394,6 +394,18 @@ const TILES = [
 { id: "SG60SE", name: "右下10", type: "song", ap: 60, gx: 8, gy: 2},
 { id: "G150SE2", name: "右下11", type: "gift", ap: 150, gx: 9, gy: 3},
 { id: "LOCKSE", name: "右下12", type: "lock", ap: null, gx: 8, gy: 6},
+{ id: "P20S1", name: "右下13", type: "normal", ap: 20, gx: 13, gy: 9},
+{ id: "SZ200S1", name: "右下14", type: "shizuku", ap: 200, gx: 13, gy: 10},
+{ id: "P20S2", name: "右下15", type: "normal", ap: 20, gx: 13, gy: 11},
+{ id: "B350S", name: "右下16", type: "event", ap: 350, gx: 13, gy: 12},
+{ id: "SZ200S2", name: "右下17", type: "shizuku", ap: 200, gx: 13, gy: 13},
+{ id: "G150S", name: "右下18", type: "gift", ap: 150, gx: 13, gy: 14},
+{ id: "P20S3", name: "右下19", type: "normal", ap: 20, gx: 15, gy: 14},
+{ id: "SZ500S2", name: "右下20", type: "shizuku", ap: 500, gx: 17, gy: 13},
+{ id: "ALL50S", name: "右下21", type: "all", ap: 50, gx: 17, gy: 12},
+{ id: "B300S", name: "右下22", type: "event", ap: 300, gx: 17, gy: 11},
+{ id: "SZ500S1", name: "右下23", type: "shizuku", ap: 500, gx: 17, gy: 10},
+{ id: "P20S4", name: "右下24", type: "normal", ap: 20, gx: 15, gy: 9},
 { id: "ALL30K2", name: "左下14", type: "all", ap: 30, gx: -11, gy: 11},
 { id: "P20K1", name: "左下15", type: "normal", ap: 20, gx: -11, gy: 12},
 { id: "COIN50", name: "左下16", type: "coin", ap: 50, gx: -11, gy: 13},
@@ -457,7 +469,9 @@ const EDGES = [
 ["P30K2", "SZ200K3"], ["SZ200K3", "B300K4"],
 ["ALL15K", "SZ100N1"], ["ALL15K", "P15N1"], ["P15N1", "SG240"],
 ["SG240", "G150N"],
-["SZ100K", "LOCK30"], ["LOCK30", "P20N1"]
+["SZ100K", "LOCK30"], ["LOCK30", "P20N1"],
+["LOCKSE", "P20S1"],
+["P20S1", "SZ200S1"], ["SZ200S1", "P20S2"], ["P20S2", "B350S"], ["B350S", "SZ200S2"], ["SZ200S2", "G150S"], ["G150S", "P20S3"], ["P20S3", "SZ500S2"], ["SZ500S2", "ALL50S"], ["ALL50S", "B300S"], ["B300S", "SZ500S1"], ["SZ500S1", "P20S4"], ["P20S4", "P20S1"]
 ];
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
