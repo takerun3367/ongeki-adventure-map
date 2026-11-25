@@ -289,7 +289,7 @@ background: var(--c, #ccc);
 /* ============================================================
 マップデータ（写真から読み取ったマスをここに追加・修正する）
 gx: 右方向 / gy: 下方向（左上のマスほど gy が小さい）
-type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート） | key（鍵） | lock（鍵の掛かった扉）
+type: start | normal | song（楽曲） | shizuku（しずく） | all（強化アイテム） | event（！マス） | gift（プレゼント） | coin（金貨） | money（マニー） | ticket（券） | plate（ネームプレート） | key（鍵） | lock（鍵の掛かった扉） | jewel（宝石）
 ap: null は ap不明（合計計算では 0 として扱う）
 ============================================================ */
 const TILES = [
@@ -350,6 +350,9 @@ const TILES = [
 { id: "ALL20NE", name: "右上30", type: "all", ap: 20, gx: 4, gy: -11},
 { id: "P15NE3", name: "右上31", type: "normal", ap: 15, gx: 3, gy: -12},
 { id: "X150NE", name: "右上32", type: "normal", ap: 15, gx: 5, gy: -12},
+{ id: "M30NE2", name: "右上37", type: "money", ap: 30, gx: 6, gy: -13},
+{ id: "JEWEL200NE", name: "右上38", type: "jewel", ap: 200, gx: 7, gy: -14},
+{ id: "SZ200NE3", name: "右上39", type: "shizuku", ap: 200, gx: 7, gy: -12},
 { id: "KEY30NE", name: "右上34", type: "key", ap: 30, gx: 2, gy: -9},
 { id: "SZ200NE2", name: "右上35", type: "shizuku", ap: 200, gx: 2, gy: -13},
 { id: "B300NE3", name: "右上36", type: "event", ap: 300, gx: 0, gy: -13},
@@ -435,6 +438,7 @@ const EDGES = [
 ["P10NE", "NE7"], ["NE7", "B40NE"], ["B40NE", "ALL15NE"], ["ALL15NE", "PLATE15NE"], ["B40NE", "G15NE2"], ["P10NE", "SZ100NE"], ["G15NE2", "P15NE2"], ["P15NE2", "PLATE100NE"],
 ["PLATE15NE", "NE27"], ["NE27", "SG90NE"], ["SG90NE", "B40NE2"], ["B40NE2", "ALL20NE"], ["ALL20NE", "P15NE3"], ["ALL20NE", "X150NE"], ["NE27", "SZ200NE"],
 ["B40NE2", "KEY30NE"], ["P15NE3", "SZ200NE2"], ["SZ200NE2", "B300NE3"],
+["X150NE", "M30NE2"], ["M30NE2", "JEWEL200NE"], ["M30NE2", "SZ200NE3"],
 ["ALL15NE", "SZ100L1"],
 ["SZ100L1", "COIN30L2"], ["COIN30L2", "G75L2"], ["G75L2", "SZ500L"], ["SZ500L", "B350L"],
 ["B350L", "G75L1"], ["G75L1", "COIN30L1"], ["COIN30L1", "SZ100L2"], ["SZ100L2", "P20L1"],
@@ -458,8 +462,7 @@ const EDGES = [
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
-{ from: "P20N1", dx: 0, dy: 1},
-{ from: "X150NE", dx: 1, dy: -1}
+{ from: "P20N1", dx: 0, dy: 1}
 ];
 
 const TYPE_LABEL = {
@@ -475,7 +478,8 @@ money: "マニー",
 ticket: "券",
 plate: "ネームプレート",
 key: "鍵",
-lock: "鍵の掛かった扉"
+lock: "鍵の掛かった扉",
+jewel: "宝石"
 };
 
 const START_ID = "S";
@@ -683,6 +687,19 @@ const body = el("rect", { x: -14, y: -2, width: 28, height: 22, rx: 4, fill: "#e
 const hole = el("circle", { cx: 0, cy: 6, r: 3.6, fill: "#5c3d00"});
 const slot = el("rect", { x: -1.8, y: 6, width: 3.6, height: 7, rx: 1.8, fill: "#5c3d00"});
 g.appendChild(shackle); g.appendChild(body); g.appendChild(hole); g.appendChild(slot);
+return g;
+},
+jewel: t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ")"});
+const body = el("polygon", { points: "-16,-11 16,-11 9,15 -9,15", fill: "#a855f7", stroke: "#6b21a8", "stroke-width": "2.5", "stroke-linejoin": "round"});
+const top = el("polygon", { points: "-16,-11 -8,-18 8,-18 16,-11", fill: "#c084fc", stroke: "#6b21a8", "stroke-width": "2.5", "stroke-linejoin": "round"});
+const facet1 = el("line", { x1: -16, y1: -11, x2: 16, y2: -11, stroke: "#6b21a8", "stroke-width": "1.6"});
+const facet2 = el("line", { x1: -8, y1: -18, x2: -4, y2: -11, stroke: "#ffffff", "stroke-width": "1.4", opacity: "0.75"});
+const facet3 = el("line", { x1: 8, y1: -18, x2: 4, y2: -11, stroke: "#ffffff", "stroke-width": "1.4", opacity: "0.75"});
+const facet4 = el("line", { x1: -4, y1: -11, x2: 0, y2: 15, stroke: "#7e22ce", "stroke-width": "1.4", opacity: "0.8"});
+const facet5 = el("line", { x1: 4, y1: -11, x2: 0, y2: 15, stroke: "#7e22ce", "stroke-width": "1.4", opacity: "0.8"});
+const shine = el("circle", { cx: -6, cy: -4, r: 2.4, fill: "#ffffff", opacity: "0.85"});
+g.appendChild(body); g.appendChild(top); g.appendChild(facet1); g.appendChild(facet2); g.appendChild(facet3); g.appendChild(facet4); g.appendChild(facet5); g.appendChild(shine);
 return g;
 },
 start: t => {
