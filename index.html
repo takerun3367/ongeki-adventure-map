@@ -337,6 +337,12 @@ const TILES = [
 { id: "G25NE", name: "右上4", type: "gift", ap: 25, gx: 3, gy: -4},
 { id: "M30NE", name: "右上5", type: "money", ap: 30, gx: 4, gy: -2},
 { id: "P10NE", name: "右上6", type: "normal", ap: 10, gx: 5, gy: -3},
+{ id: "NE7", name: "右上7", type: "normal", ap: null, gx: 6, gy: -4},
+{ id: "B40NE", name: "右上8", type: "event", ap: 40, gx: 7, gy: -5},
+{ id: "ALL15NE", name: "右上9", type: "all", ap: 15, gx: 7, gy: -6},
+{ id: "PLATE15NE", name: "右上10", type: "plate", ap: 15, gx: 6, gy: -7},
+{ id: "G15NE2", name: "右上11", type: "gift", ap: 15, gx: 8, gy: -4},
+{ id: "SZ100NE", name: "右上12", type: "shizuku", ap: 100, gx: 6, gy: -2},
 { id: "SW1", name: "左下1", type: "normal", ap: 10, gx: -1, gy: 1},
 { id: "SW2", name: "左下2", type: "all", ap: 15, gx: -2, gy: 2},
 { id: "K15", name: "左下3", type: "ticket", ap: 15, gx: -3, gy: 3},
@@ -403,6 +409,7 @@ const EDGES = [
 ["P9-8", "P9-7"], ["P9-7", "P9-6"], ["P9-6", "P9-5"], ["P9-5", "P9-4"],
 ["P9-4", "P9-3"], ["P9-3", "P9-2"], ["P9-2", "P9-1"],
 ["S", "NE1"], ["NE1", "NE2"], ["NE2", "NE3"], ["NE3", "G25NE"], ["NE3", "M30NE"], ["M30NE", "P10NE"],
+["P10NE", "NE7"], ["NE7", "B40NE"], ["B40NE", "ALL15NE"], ["ALL15NE", "PLATE15NE"], ["B40NE", "G15NE2"], ["P10NE", "SZ100NE"],
 ["S", "SW1"], ["SW1", "SW2"], ["SW2", "K15"], ["K15", "P10K1"], ["K15", "P10K2"],
 ["P10K1", "P15NP"], ["P10K2", "SZ100K"], ["P15NP", "B40K"], ["P15NP", "M30K"],
 ["M30K", "P15K3"], ["M30K", "P15K4"], ["P15K4", "P15K5"], ["P15K5", "ALL15K"],
@@ -422,8 +429,9 @@ const EDGES = [
 
 /* 未探索の線: from のマスから (dx, dy) 方向へ写真の外に続く */
 const FRONTIER = [
-{ from: "P10NE", dx: 1, dy: -1},
-{ from: "P10NE", dx: 1, dy: 1},
+{ from: "PLATE15NE", dx: -1, dy: -1},
+{ from: "ALL15NE", dx: 1, dy: -1},
+{ from: "G15NE2", dx: 1, dy: 1},
 { from: "P20N1", dx: 0, dy: 1}
 ];
 
