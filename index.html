@@ -189,6 +189,9 @@ font-size: 16px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-e
 .tile .ap-badge-text {
 font-size: 24px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
 }
+.tile .count-badge-text {
+font-size: 24px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
+}
 .tile .icon { pointer-events: none;}
 .tile .cost {
 font-size: 17px; font-weight: 800; fill: #4a3200; text-anchor: middle; pointer-events: none;
@@ -815,10 +818,10 @@ else if (d.indexOf("チャプター") >= 0) { label = "ストーリー"; color =
 else if (d.indexOf("Make UP Future") >= 0) { label = "プレート"; color = "#2e9e5b";}
 if (label) {
 /* チップはラッパーを介さず g へ直接描く（g は絶対座標系なので、
-(t.x, t.y-8) を原点とするローカル座標 rect x=-w/2・text x=0・cy=35 を換算して指定する）:
-横はマスの中心、縦はマスの下端寄り（ローカル y=35）にそろえる */
+(t.x, t.y-8) を原点とするローカル座標 rect x=-w/2・text x=0・cy=16 を換算して指定する）:
+横はマスの中心、縦はイベントアイコンのすぐ下（チップ中心がマス中心より約20下）にそろえる */
 const w = label.length * 11 + 15;
-const cy = 35;
+const cy = 16;
 g.appendChild(el("rect", { x: t.x - w / 2, y: (t.y - 8) + cy - 9.5, width: w, height: 19, rx: 9.5, fill: color, stroke: "#ffffff", "stroke-width": "1.5"}));
 const tx = el("text", { x: t.x, y: (t.y - 8) + cy + 4, "text-anchor": "middle", "font-size": "11", "font-weight": "900", fill: "#ffffff"});
 tx.textContent = label;
@@ -1028,6 +1031,18 @@ g.appendChild(el("rect", { x: bcx - bw / 2, y: bcy - 17, width: bw, height: 34, 
 const btxt = el("text", { x: bcx, y: bcy + 8.5, "class": "ap-badge-text"});
 btxt.textContent = label;
 g.appendChild(btxt);
+}
+if (t.detail) {
+const cm = t.detail.match(/×([\d,]+)/);
+if (cm) {
+const clabel = "×" + cm[1];
+const cbw = Math.round(clabel.length * 15.5) + 20;
+const cbcx = t.x - HEX_R * 0.6, cbcy = t.y + HEX_R * 0.6;
+g.appendChild(el("rect", { x: cbcx - cbw / 2, y: cbcy - 17, width: cbw, height: 34, rx: 10, fill: "#1e365e", "class": "count-badge"}));
+const ctxt = el("text", { x: cbcx, y: cbcy + 8.5, "class": "count-badge-text"});
+ctxt.textContent = clabel;
+g.appendChild(ctxt);
+}
 }
 }
 const check = el("text", { x: t.x + HEX_R - 13, y: t.y - HEX_R + 20, "class": "check", "data-check": "1"});
