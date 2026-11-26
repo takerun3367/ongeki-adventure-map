@@ -762,6 +762,240 @@ return c;
 }
 };
 
+/* ============================================================
+報酬アイコンの描き替え（ゲームの見た目に寄せた自作SVG）
+元のアイコンは detail で判定できない場合のフォールバックとして残す
+============================================================ */
+const ORIG_ICONS = { gift: ICONS.gift, all: ICONS.all, plate: ICONS.plate, key: ICONS.key, lock: ICONS.lock, ticket: ICONS.ticket, event: ICONS.event };
+
+/* 虹色グラデーション（楽曲枠・強化バッジ・SSR券などで共用） */
+const svgDefs = el("defs", {});
+const rainbowGrad = el("linearGradient", { id: "rainbow-grad", x1: "0%", y1: "0%", x2: "100%", y2: "100%"});
+[["0%", "#ff5f9e"], ["20%", "#ff9f43"], ["40%", "#ffd93b"], ["60%", "#5fd35f"], ["80%", "#4fc3e8"], ["100%", "#9b5de5"]].forEach(pair => {
+rainbowGrad.appendChild(el("stop", { offset: pair[0], "stop-color": pair[1]}));
+});
+svgDefs.appendChild(rainbowGrad);
+svg.appendChild(svgDefs);
+
+function starPts(cx, cy, spikes, rO, rI, rot) {
+const pts = [];
+for (let i = 0; i < spikes * 2; i++) {
+const r = i % 2 === 0 ? rO : rI;
+const a = (Math.PI / 180) * (rot + (360 / (spikes * 2)) * i);
+pts.push((cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1));
+}
+return pts.join(" ");
+}
+function detailOf(t) { return t.detail || "";}
+function colorFromDetail(t) {
+const d = detailOf(t);
+if (d.indexOf("桃") >= 0) return { main: "#f06a9b", dark: "#b0255a", light: "#ffd3e6"};
+if (d.indexOf("青") >= 0) return { main: "#4aa3e8", dark: "#1a5fa0", light: "#cfe9ff"};
+if (d.indexOf("黄") >= 0) return { main: "#eec33f", dark: "#a8740a", light: "#fdf3d8"};
+return null;
+}
+
+/* 1. 楽曲：虹色の角丸枠＋白地＋濃い青の大きな音符 */
+ICONS.song = t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 6) + ")"});
+g.appendChild(el("rect", { x: -27, y: -27, width: 54, height: 54, rx: 11, fill: "#ffffff", stroke: "url(#rainbow-grad)", "stroke-width": "5.5"}));
+const tx = el("text", { x: 0, y: 16, "text-anchor": "middle", "font-size": "43", "font-weight": "900", fill: "#144a9e"});
+tx.textContent = "♪";
+g.appendChild(tx);
+return g;
+};
+
+/* 2. イベント：従来の四角形（！）＋下端に種別チップ */
+ICONS.event = t => {
+const g = ORIG_ICONS.event(t);
+const d = detailOf(t);
+let label = null, color = null;
+if (d.indexOf("SSR［") >= 0) { label = "カード"; color = "#d6336c";}
+else if (d.indexOf("チャプター") >= 0) { label = "ストーリー"; color = "#1a6fc4";}
+else if (d.indexOf("Make UP Future") >= 0) { label = "プレート"; color = "#2e9e5b";}
+if (label) {
+/* チップはラッパーを介さず g へ直接描く（g は絶対座標系なので、
+(t.x, t.y-8) を原点とするローカル座標 rect x=-w/2・text x=0・cy=35 を換算して指定する）:
+横はマスの中心、縦はマスの下端寄り（ローカル y=35）にそろえる */
+const w = label.length * 11 + 15;
+const cy = 35;
+g.appendChild(el("rect", { x: t.x - w / 2, y: (t.y - 8) + cy - 9.5, width: w, height: 19, rx: 9.5, fill: color, stroke: "#ffffff", "stroke-width": "1.5"}));
+const tx = el("text", { x: t.x, y: (t.y - 8) + cy + 4, "text-anchor": "middle", "font-size": "11", "font-weight": "900", fill: "#ffffff"});
+tx.textContent = label;
+g.appendChild(tx);
+}
+return g;
+};
+
+/* 3. プレゼント：（中）ピンクの箱＋リボン / （大）ハート型の箱＋黒リボン＋花 */
+ICONS.gift = t => {
+const d = detailOf(t);
+if (d.indexOf("親密度上昇プレゼント（大）") >= 0) {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 4) + ")"});
+const heart = "M0,24 C-4,16 -26,6 -26,-8 C-26,-20 -16,-26 -8,-24 C-3,-22.5 0,-18 0,-14 C0,-18 3,-22.5 8,-24 C16,-26 26,-20 26,-8 C26,6 4,16 0,24 Z";
+const clip = el("clipPath", { id: "gift-heart-" + t.id});
+clip.appendChild(el("path", { d: heart}));
+g.appendChild(clip);
+g.appendChild(el("path", { d: heart, fill: "#ff8fb8", stroke: "#c94f7c", "stroke-width": "2.5", "stroke-linejoin": "round"}));
+const ribbons = el("g", { "clip-path": "url(#gift-heart-" + t.id + ")"});
+ribbons.appendChild(el("rect", { x: -3.5, y: -27, width: 7, height: 54, fill: "#2b2b2b"}));
+ribbons.appendChild(el("rect", { x: -27, y: -6.5, width: 54, height: 7, fill: "#2b2b2b"}));
+g.appendChild(ribbons);
+for (let i = 0; i < 5; i++) {
+const a = (Math.PI / 180) * (72 * i - 90);
+g.appendChild(el("circle", { cx: (5.2 * Math.cos(a)).toFixed(1), cy: (-3 + 5.2 * Math.sin(a)).toFixed(1), r: 4, fill: "#ffffff", stroke: "#e2547e", "stroke-width": "1.2"}));
+}
+g.appendChild(el("circle", { cx: 0, cy: -3, r: 3, fill: "#ffd93b", stroke: "#d9a400", "stroke-width": "1"}));
+return g;
+}
+if (d.indexOf("親密度上昇プレゼント（中）") >= 0) {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 6) + ")"});
+g.appendChild(el("rect", { x: -21, y: -2, width: 42, height: 30, rx: 4, fill: "#ff9ec4", stroke: "#c94f7c", "stroke-width": "2.5"}));
+g.appendChild(el("rect", { x: -23, y: -9, width: 46, height: 9, rx: 4, fill: "#ffb9d4", stroke: "#c94f7c", "stroke-width": "2.5"}));
+g.appendChild(el("rect", { x: -3.5, y: -9, width: 7, height: 37, fill: "#e2547e"}));
+g.appendChild(el("rect", { x: -21, y: 9, width: 42, height: 7, fill: "#e2547e"}));
+const bowL = el("ellipse", { cx: -7, cy: -14, rx: 7, ry: 4, fill: "#ff7fab", stroke: "#c94f7c", "stroke-width": "1.5", transform: "rotate(-25 -7 -14)"});
+const bowR = el("ellipse", { cx: 7, cy: -14, rx: 7, ry: 4, fill: "#ff7fab", stroke: "#c94f7c", "stroke-width": "1.5", transform: "rotate(25 7 -14)"});
+g.appendChild(bowL); g.appendChild(bowR);
+return g;
+}
+return ORIG_ICONS.gift(t);
+};
+
+/* 4. 強化アイテム：虹色の縁の六角形＋白カード＋上昇矢印＋ALL */
+function allBadge(t, big) {
+const r = big ? 30 : 24;
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 6) + ")"});
+g.appendChild(el("polygon", { points: hexPoints(0, 0, r), fill: "#ffffff", stroke: "url(#rainbow-grad)", "stroke-width": "4", "stroke-linejoin": "round"}));
+const cw = big ? 20 : 17, ch = big ? 24 : 20, cy0 = big ? -17 : -14;
+g.appendChild(el("rect", { x: -cw / 2, y: cy0, width: cw, height: ch, rx: 2.5, fill: "#eef4fb", stroke: "#9db8d2", "stroke-width": "1.6"}));
+function arrow(x, s) {
+const p = el("polygon", {
+points: (x - 3.2 * s) + "," + (cy0 + ch / 2 - 1) + " " + x + "," + (cy0 + 3) + " " + (x + 3.2 * s) + "," + (cy0 + ch / 2 - 1) + " " + (x + 1.6 * s) + "," + (cy0 + ch / 2 - 1) + " " + (x + 1.6 * s) + "," + (cy0 + ch - 3) + " " + (x - 1.6 * s) + "," + (cy0 + ch - 3) + " " + (x - 1.6 * s) + "," + (cy0 + ch / 2 - 1),
+fill: "#e2547e"
+});
+return p;
+}
+if (big) { g.appendChild(arrow(-4.6, 0.95)); g.appendChild(arrow(4.6, 0.95));}
+else { g.appendChild(arrow(0, 0.9));}
+const tx = el("text", { x: 0, y: big ? 23.5 : 19, "text-anchor": "middle", "font-size": big ? 11.5 : 10, "font-weight": "900", fill: "#c2255c"});
+tx.textContent = "ALL";
+g.appendChild(tx);
+return g;
+}
+ICONS.all = t => {
+const d = detailOf(t);
+if (d.indexOf("強化アイテム（大）") >= 0) return allBadge(t, true);
+if (d.indexOf("強化アイテム（中）") >= 0) return allBadge(t, false);
+return ORIG_ICONS.all(t);
+};
+
+/* 5. マニー：Mの刻印の金貨を重ねる */
+ICONS.money = t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 4) + ")"});
+[[-12, -13], [13, -15], [0, 2]].forEach((c, i) => {
+const r = i === 2 ? 16.5 : 13.5;
+g.appendChild(el("circle", { cx: c[0], cy: c[1], r: r, fill: "#f6c945", stroke: "#b8860b", "stroke-width": "2.5"}));
+});
+[[-12, -13, 12], [13, -15, 12], [0, 2, 17]].forEach(c => {
+const tx = el("text", { x: c[0], y: c[1] + c[2] * 0.36, "text-anchor": "middle", "font-size": c[2], "font-weight": "900", fill: "#7a5200"});
+tx.textContent = "M";
+g.appendChild(tx);
+});
+return g;
+};
+
+/* 6. メダル：ギザギザ縁の大きな金メダル＋星の刻印 */
+ICONS.coin = t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 6) + ")"});
+g.appendChild(el("polygon", { points: starPts(0, 0, 18, 25, 21.5, -90), fill: "#f6c945", stroke: "#b8860b", "stroke-width": "2", "stroke-linejoin": "round"}));
+g.appendChild(el("circle", { cx: 0, cy: 0, r: 16, fill: "none", stroke: "#b8860b", "stroke-width": "2"}));
+g.appendChild(el("polygon", { points: starPts(0, 0, 5, 11, 4.4, -90), fill: "#d9940d", stroke: "#b8860b", "stroke-width": "1.2", "stroke-linejoin": "round"}));
+return g;
+};
+
+/* 7. 解花チケット：ピンクの横長券＋百合の花マーク＋「解花」 */
+ICONS.ticket = t => {
+if (detailOf(t).indexOf("解花") < 0) return ORIG_ICONS.ticket(t);
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ")"});
+const mask = el("mask", { id: "kaika-tk-" + t.id});
+mask.appendChild(el("rect", { x: -31, y: -16, width: 62, height: 32, fill: "#ffffff"}));
+mask.appendChild(el("circle", { cx: 22, cy: -16, r: 4.5, fill: "#000000"}));
+mask.appendChild(el("circle", { cx: 22, cy: 16, r: 4.5, fill: "#000000"}));
+g.appendChild(mask);
+const body = el("g", { mask: "url(#kaika-tk-" + t.id + ")"});
+body.appendChild(el("rect", { x: -31, y: -16, width: 62, height: 32, rx: 5, fill: "#ffd3e6", stroke: "#d6336c", "stroke-width": "2.5"}));
+body.appendChild(el("line", { x1: 22, y1: -11, x2: 22, y2: 11, stroke: "#d6336c", "stroke-width": "1.8", "stroke-dasharray": "3 3"}));
+g.appendChild(body);
+const lily = el("g", { transform: "translate(-21,0)"});
+const petal = "M0,-9 C3.5,-3 3.5,3 0,9 C-3.5,3 -3.5,-3 0,-9 Z";
+lily.appendChild(el("path", { d: petal, fill: "#ff7fab", transform: "rotate(-40 0 2)"}));
+lily.appendChild(el("path", { d: petal, fill: "#ff7fab", transform: "rotate(40 0 2)"}));
+lily.appendChild(el("path", { d: petal, fill: "#e2547e"}));
+lily.appendChild(el("circle", { cx: 0, cy: 3, r: 1.8, fill: "#b0255a"}));
+g.appendChild(lily);
+const tx = el("text", { x: 3, y: 5.5, "text-anchor": "middle", "font-size": "15.5", "font-weight": "900", fill: "#b0255a"});
+tx.textContent = "解花";
+g.appendChild(tx);
+return g;
+};
+
+/* 8. スターチケット：SRは金系 / SSRは虹色の縁＋金の星 */
+ICONS.plate = t => {
+const d = detailOf(t);
+const isSSR = d.indexOf("SSRスターチケット") >= 0;
+const isSR = !isSSR && d.indexOf("SRスターチケット") >= 0;
+if (!isSSR && !isSR) return ORIG_ICONS.plate(t);
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ")"});
+g.appendChild(el("rect", { x: -30, y: -15, width: 60, height: 30, rx: 5,
+fill: isSSR ? "#ffffff" : "#fdf3d8",
+stroke: isSSR ? "url(#rainbow-grad)" : "#b8860b", "stroke-width": isSSR ? 3.5 : 2.5}));
+g.appendChild(el("polygon", { points: starPts(-19, 0, 5, 9, 3.6, -90), fill: "#e8a90c", stroke: "#b8860b", "stroke-width": "1.2", "stroke-linejoin": "round"}));
+const tx = el("text", { x: isSSR ? 7 : 6, y: 6, "text-anchor": "middle", "font-size": isSSR ? 15 : 16, "font-weight": "900", fill: isSSR ? "#6b21a8" : "#8a5f00"});
+tx.textContent = isSSR ? "SSR" : "SR";
+g.appendChild(tx);
+return g;
+};
+
+/* 9. 鍵：detailの色名で描き分け、太く大きく */
+ICONS.key = t => {
+const c = colorFromDetail(t);
+if (!c) return ORIG_ICONS.key(t);
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ") scale(1.25)"});
+g.appendChild(el("line", { x1: -2, y1: -2, x2: 15, y2: 15, stroke: c.dark, "stroke-width": "6", "stroke-linecap": "round"}));
+g.appendChild(el("line", { x1: 15, y1: 15, x2: 15, y2: 7, stroke: c.dark, "stroke-width": "5.5", "stroke-linecap": "round"}));
+g.appendChild(el("line", { x1: 9, y1: 9, x2: 16, y2: 9, stroke: c.dark, "stroke-width": "5.5", "stroke-linecap": "round"}));
+g.appendChild(el("circle", { cx: -9, cy: -9, r: 9.5, fill: c.light, stroke: c.dark, "stroke-width": "5"}));
+g.appendChild(el("circle", { cx: -9, cy: -9, r: 3, fill: c.dark}));
+return g;
+};
+
+/* 10. 扉：detailの色名で描き分けた太く大きな南京錠（鍵穴は白） */
+ICONS.lock = t => {
+const c = colorFromDetail(t);
+if (!c) return ORIG_ICONS.lock(t);
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 8) + ") scale(1.2)"});
+g.appendChild(el("path", { d: "M-10,0 L-10,-9 A10,10 0 0 1 10,-9 L10,0", fill: "none", stroke: c.dark, "stroke-width": "5.5", "stroke-linecap": "round"}));
+g.appendChild(el("rect", { x: -16, y: -2, width: 32, height: 25, rx: 5, fill: c.main, stroke: c.dark, "stroke-width": "2.5"}));
+g.appendChild(el("circle", { cx: 0, cy: 7, r: 4, fill: "#ffffff"}));
+g.appendChild(el("rect", { x: -2, y: 7, width: 4, height: 8, rx: 2, fill: "#ffffff"}));
+return g;
+};
+
+/* 11. SSR確定書：縦長の虹色に光る券＋「SSR」「確定」 */
+ICONS.card = t => {
+const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y - 4) + ")"});
+g.appendChild(el("rect", { x: -19, y: -25, width: 38, height: 50, rx: 6, fill: "#ffffff", stroke: "url(#rainbow-grad)", "stroke-width": "4"}));
+g.appendChild(el("polygon", { points: starPts(0, -14, 5, 5.5, 2.2, -90), fill: "#e8a90c", stroke: "#b8860b", "stroke-width": "1", "stroke-linejoin": "round"}));
+const t1 = el("text", { x: 0, y: 3, "text-anchor": "middle", "font-size": "15", "font-weight": "900", fill: "#1a6fc4"});
+t1.textContent = "SSR";
+g.appendChild(t1);
+const t2 = el("text", { x: 0, y: 19, "text-anchor": "middle", "font-size": "14", "font-weight": "900", fill: "#d63a3a"});
+t2.textContent = "確定";
+g.appendChild(t2);
+return g;
+};
+
 /* エリア（左上／左下／右上／右下）ごとの色：番号ピルとマスの輪に使う */
 const AREA_COLORS = { "左上": "#1e5aa0", "左下": "#196e37", "右上": "#aa5f0a", "右下": "#822daa"};
 const AREA_CLASS = { "左上": "area-nw", "左下": "area-sw", "右上": "area-ne", "右下": "area-se"};
