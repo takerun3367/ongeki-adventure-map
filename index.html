@@ -187,7 +187,7 @@ transition: fill 0.2s ease;
 font-size: 16px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
 }
 .tile .ap-badge-text {
-font-size: 15px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
+font-size: 18px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
 }
 .tile .icon { pointer-events: none;}
 .tile .cost {
@@ -787,11 +787,11 @@ const iconWrap = el("g", { transform: "translate(0,12)"});
 iconWrap.appendChild(ICONS[t.type](t));
 g.appendChild(iconWrap);
 if (t.ap !== null && t.ap !== undefined) {
-const label = "AP" + t.ap;
-const bw = Math.round(label.length * 9.6) + 16;
+const label = String(t.ap);
+const bw = Math.round(label.length * 11.5) + 16;
 const bcx = t.x + HEX_R * 0.6, bcy = t.y + HEX_R * 0.6;
-g.appendChild(el("rect", { x: bcx - bw / 2, y: bcy - 12, width: bw, height: 24, rx: 8, fill: "#d65414", "class": "ap-badge"}));
-const btxt = el("text", { x: bcx, y: bcy + 5.5, "class": "ap-badge-text"});
+g.appendChild(el("rect", { x: bcx - bw / 2, y: bcy - 13, width: bw, height: 26, rx: 8, fill: "#d65414", "class": "ap-badge"}));
+const btxt = el("text", { x: bcx, y: bcy + 6.5, "class": "ap-badge-text"});
 btxt.textContent = label;
 g.appendChild(btxt);
 }
@@ -896,7 +896,28 @@ const K_MIN = 0.3, K_MAX = 8;
 function applyView() {
 viewport.setAttribute("transform", "translate(" + view.x + "," + view.y + ") scale(" + view.k + ")");
 }
-function resetView() { view.x = 0; view.y = 0; view.k = 1; applyView();}
+function resetView() {
+/* 全マスが viewBox 内に小さな余白で収まる倍率・位置を計算する */
+let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+TILES.forEach(t => {
+if (t.x < minX) minX = t.x;
+if (t.x > maxX) maxX = t.x;
+if (t.y < minY) minY = t.y;
+if (t.y > maxY) maxY = t.y;
+});
+/* 余白: 左・上はマスの半径・ピル・バッジのはみ出し分。
+右・下は広めに取り、マップ右下のズームボタンに端のマスが隠れないようにする */
+const padL = 100, padR = 420, padT = 100, padB = 180;
+const vb = svg.viewBox.baseVal;
+const k = Math.min(
+vb.width / (maxX - minX + padL + padR),
+vb.height / (maxY - minY + padT + padB)
+);
+view.k = Math.min(K_MAX, k);
+view.x = vb.x + vb.width / 2 - view.k * (minX - padL + maxX + padR) / 2;
+view.y = vb.y + vb.height / 2 - view.k * (minY - padT + maxY + padB) / 2;
+applyView();
+}
 function zoomBy(factor, cx, cy) {
 const rect = svg.getBoundingClientRect();
 const pt = svgPoint(cx, cy);
@@ -1026,7 +1047,7 @@ svg.addEventListener("touchcancel", fbEnd);
 refreshTiles();
 refreshProgress();
 renderDetail();
-applyView();
+resetView();
 </script>
 </body>
 </html>
