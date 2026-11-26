@@ -1019,8 +1019,12 @@ const cost = el("text", { x: t.x, y: t.y + 28, "class": "cost", "font-size": "13
 cost.textContent = "START";
 g.appendChild(cost);
 } else {
-/* アイコンは番号ピルと重ならないよう少し下寄せ */
-const iconWrap = el("g", { transform: "translate(0,12)"});
+/* アイコンを約1.35倍に拡大し、表示位置を約12px上へずらす
+（タイル中心を基準に拡大し、従来の下寄せ translate(0,12) を廃して
+中心が従来より約12px上になるよう translate(t.x, t.y + 2) を基準にする。
+イベントマスの種別チップも同じラッパー内なので一緒に追随する。
+個数バッジ・APバッジはこのラッパーの外なので位置は変わらない） */
+const iconWrap = el("g", { transform: "translate(" + t.x + "," + (t.y + 2) + ") scale(1.35) translate(" + (-t.x) + "," + (-t.y) + ")"});
 iconWrap.appendChild(ICONS[t.type](t));
 g.appendChild(iconWrap);
 if (t.ap !== null && t.ap !== undefined) {
@@ -1034,8 +1038,11 @@ g.appendChild(btxt);
 }
 if (t.detail) {
 const cm = t.detail.match(/×([\d,]+)/);
-if (cm) {
-const clabel = "×" + cm[1];
+/* マニーは個数ではなく金額表記（例「5,000マニー」）なので、
+数字部分だけを「×」なしで同じ左下バッジに表示する */
+const mm = cm ? null : t.detail.match(/([\d,]+)マニー/);
+if (cm || mm) {
+const clabel = cm ? "×" + cm[1] : mm[1];
 const cbw = Math.round(clabel.length * 15.5) + 20;
 const cbcx = t.x - HEX_R * 0.6, cbcy = t.y + HEX_R * 0.6;
 g.appendChild(el("rect", { x: cbcx - cbw / 2, y: cbcy - 17, width: cbw, height: 34, rx: 10, fill: "#1e365e", "class": "count-badge"}));
