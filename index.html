@@ -178,17 +178,23 @@ transition: fill 0.2s ease;
 .tile.locked .hex { fill: var(--tile-locked-fill); stroke: var(--tile-locked-stroke);}
 .tile.open .hex { fill: var(--tile-open-fill); stroke: var(--tile-open-stroke);}
 .tile.start .hex { fill: var(--tile-start-fill); stroke: var(--tile-start-stroke);}
+.tile.area-nw .hex { stroke: #1e5aa0;}
+.tile.area-sw .hex { stroke: #196e37;}
+.tile.area-ne .hex { stroke: #aa5f0a;}
+.tile.area-se .hex { stroke: #822daa;}
 .tile.selected .hex { stroke: var(--ink); stroke-width: 6;}
+.tile .pill-num {
+font-size: 16px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
+}
+.tile .ap-badge-text {
+font-size: 15px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
+}
 .tile .icon { pointer-events: none;}
 .tile .cost {
 font-size: 17px; font-weight: 800; fill: #4a3200; text-anchor: middle; pointer-events: none;
 }
 .tile.open .cost { fill: #0d4423;}
 .tile.start .cost { fill: #5c0f22;}
-.tile .tname {
-font-size: 14.5px; font-weight: 700; fill: var(--ink); text-anchor: middle; pointer-events: none;
-paint-order: stroke; stroke: var(--sky-bottom); stroke-width: 4px;
-}
 .tile .check {
 font-size: 15px; font-weight: 900; fill: #ffffff; text-anchor: middle; pointer-events: none;
 }
@@ -520,7 +526,7 @@ const STORAGE_KEY = "ongeki-adventure-demo-unlocked-v1";
 /* ---------- レイアウト ---------- */
 const STEP_X = 118, STEP_Y = 118;
 const ORIGIN_X = 350, ORIGIN_Y = 400;
-const HEX_R = 46;
+const HEX_R = 60;
 const byId = {};
 TILES.forEach(t => {
 t.x = ORIGIN_X + t.gx * STEP_X;
@@ -756,26 +762,52 @@ return c;
 }
 };
 
+/* エリア（左上／左下／右上／右下）ごとの色：番号ピルとマスの輪に使う */
+const AREA_COLORS = { "左上": "#1e5aa0", "左下": "#196e37", "右上": "#aa5f0a", "右下": "#822daa"};
+const AREA_CLASS = { "左上": "area-nw", "左下": "area-sw", "右上": "area-ne", "右下": "area-se"};
+function tileArea(t) {
+for (const k in AREA_COLORS) { if (t.name.indexOf(k) === 0) return k;}
+return null;
+}
+
 const tileEls = {};
 TILES.forEach(t => {
 const g = el("g", { "class": "tile", "data-id": t.id, role: "button", "aria-label": t.name});
+const area = tileArea(t);
+t.areaCls = area ? AREA_CLASS[area] : "";
 g.appendChild(el("polygon", { points: hexPoints(t.x, t.y, HEX_R), "class": "hex"}));
+if (t.type === "start") {
 g.appendChild(ICONS[t.type](t));
-if (t.type!== "start") {
-const cost = el("text", { x: t.x, y: t.y + 26, "class": "cost"});
-cost.textContent = t.ap === null ? "？ ap" : t.ap + " ap";
-g.appendChild(cost);
-} else {
 const cost = el("text", { x: t.x, y: t.y + 28, "class": "cost", "font-size": "13"});
 cost.textContent = "START";
 g.appendChild(cost);
+} else {
+/* アイコンは番号ピルと重ならないよう少し下寄せ */
+const iconWrap = el("g", { transform: "translate(0,12)"});
+iconWrap.appendChild(ICONS[t.type](t));
+g.appendChild(iconWrap);
+if (t.ap !== null && t.ap !== undefined) {
+const label = "AP" + t.ap;
+const bw = Math.round(label.length * 9.6) + 16;
+const bcx = t.x + HEX_R * 0.6, bcy = t.y + HEX_R * 0.6;
+g.appendChild(el("rect", { x: bcx - bw / 2, y: bcy - 12, width: bw, height: 24, rx: 8, fill: "#d65414", "class": "ap-badge"}));
+const btxt = el("text", { x: bcx, y: bcy + 5.5, "class": "ap-badge-text"});
+btxt.textContent = label;
+g.appendChild(btxt);
+}
 }
 const check = el("text", { x: t.x + HEX_R - 13, y: t.y - HEX_R + 20, "class": "check", "data-check": "1"});
 check.textContent = "✓";
 g.appendChild(check);
-const name = el("text", { x: t.x, y: t.y + HEX_R + 22, "class": "tname"});
-name.textContent = t.name;
-g.appendChild(name);
+if (area) {
+const num = t.name.slice(area.length);
+const pw = Math.max(36, Math.round(num.length * 11) + 18);
+const pillY = t.y - HEX_R + 10;
+g.appendChild(el("rect", { x: t.x - pw / 2, y: pillY - 12, width: pw, height: 24, rx: 12, fill: AREA_COLORS[area], "class": "pill"}));
+const ptxt = el("text", { x: t.x, y: pillY + 6, "class": "pill-num"});
+ptxt.textContent = num;
+g.appendChild(ptxt);
+}
 gTiles.appendChild(g);
 tileEls[t.id] = g;
 });
@@ -789,7 +821,7 @@ TILES.forEach(t => {
 const g = tileEls[t.id];
 const isOpen = unlocked.has(t.id);
 g.setAttribute("class",
-"tile" + (isOpen? " open": " locked") + (t.type === "start"? " start": "") + (selectedId === t.id? " selected": ""));
+"tile" + (isOpen? " open": " locked") + (t.type === "start"? " start": "") + (t.areaCls ? " " + t.areaCls : "") + (selectedId === t.id? " selected": ""));
 const check = g.querySelector("[data-check]");
 if (check) check.style.display = isOpen && t.type!== "start"? "": "none";
 });
