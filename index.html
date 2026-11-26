@@ -187,7 +187,7 @@ transition: fill 0.2s ease;
 font-size: 16px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
 }
 .tile .ap-badge-text {
-font-size: 18px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
+font-size: 24px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
 }
 .tile .icon { pointer-events: none;}
 .tile .cost {
@@ -788,10 +788,10 @@ iconWrap.appendChild(ICONS[t.type](t));
 g.appendChild(iconWrap);
 if (t.ap !== null && t.ap !== undefined) {
 const label = String(t.ap);
-const bw = Math.round(label.length * 11.5) + 16;
+const bw = Math.round(label.length * 15.5) + 20;
 const bcx = t.x + HEX_R * 0.6, bcy = t.y + HEX_R * 0.6;
-g.appendChild(el("rect", { x: bcx - bw / 2, y: bcy - 13, width: bw, height: 26, rx: 8, fill: "#d65414", "class": "ap-badge"}));
-const btxt = el("text", { x: bcx, y: bcy + 6.5, "class": "ap-badge-text"});
+g.appendChild(el("rect", { x: bcx - bw / 2, y: bcy - 17, width: bw, height: 34, rx: 10, fill: "#d65414", "class": "ap-badge"}));
+const btxt = el("text", { x: bcx, y: bcy + 8.5, "class": "ap-badge-text"});
 btxt.textContent = label;
 g.appendChild(btxt);
 }
