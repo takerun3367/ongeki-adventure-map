@@ -907,6 +907,16 @@ const body = el("rect", { x: -14, y: -2, width: 28, height: 22, rx: 4, fill: "#e
 const hole = el("circle", { cx: 0, cy: 6, r: 3.6, fill: "#5c3d00"});
 const slot = el("rect", { x: -1.8, y: 6, width: 3.6, height: 7, rx: 1.8, fill: "#5c3d00"});
 g.appendChild(shackle); g.appendChild(body); g.appendChild(hole); g.appendChild(slot);
+/* フォールバック時も南京錠の上に左上→右下のチェーンを描く（色分け版と同じ見た目） */
+const chain = el("g", { "class": "lock-chain"});
+chain.appendChild(el("line", { x1: -24, y1: -22, x2: 24, y2: 26, stroke: "#14171a", "stroke-width": "9", "stroke-linecap": "round", opacity: "0.22"}));
+[-33, -22, -11, 0, 11, 22, 33].forEach((d, i) => {
+const cx = (d * 0.7071).toFixed(1), cy = (2 + d * 0.7071).toFixed(1);
+const rot = "rotate(" + (i % 2 === 0 ? 45 : -45) + " " + cx + " " + cy + ")";
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 8.6, ry: 5, transform: rot, fill: "none", stroke: "#2f343a", "stroke-width": "3.6"}));
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 8.6, ry: 5, transform: rot, fill: "none", stroke: "#aeb7bf", "stroke-width": "1.1", opacity: "0.9"}));
+});
+g.appendChild(chain);
 return g;
 },
 jewel: t => {
@@ -1152,7 +1162,10 @@ g.appendChild(el("circle", { cx: -9, cy: -9, r: 3, fill: c.dark}));
 return g;
 };
 
-/* 10. 扉：detailの色名で描き分けた太く大きな南京錠（鍵穴は白） */
+/* 10. 扉：detailの色名で描き分けた太く大きな南京錠（鍵穴は白）
+南京錠の上から、マスの左上→右下へ斜めにチェーンが掛かっている見た目にする。
+チェーンは斜めの線に沿って楕円リンク（輪）を連ね、濃いグレーの金属質にする。
+鍵マスや他のアイコンには触れない（この関数は type: lock 専用）。 */
 ICONS.lock = t => {
 const c = colorFromDetail(t);
 if (!c) return ORIG_ICONS.lock(t);
@@ -1161,6 +1174,20 @@ g.appendChild(el("path", { d: "M-10,0 L-10,-9 A10,10 0 0 1 10,-9 L10,0", fill: "
 g.appendChild(el("rect", { x: -16, y: -2, width: 32, height: 25, rx: 5, fill: c.main, stroke: c.dark, "stroke-width": "2.5"}));
 g.appendChild(el("circle", { cx: 0, cy: 7, r: 4, fill: "#ffffff"}));
 g.appendChild(el("rect", { x: -2, y: 7, width: 4, height: 8, rx: 2, fill: "#ffffff"}));
+/* --- チェーン（南京錠の上に重ねて描く） ---
+左上 (-24,-22) から右下 (24,26) へ、南京錠の中心 (0,2) を通る45°の斜め線。
+まず薄い影の帯を敷き、その上に楕円リンクを等間隔に並べる。
+リンクは向きを45°／-45°で交互に変えて、輪が互いに通し合った鎖らしく見せる。
+各リンクは濃いグレーの太い輪郭＋中央の明るいグレーの線で金属の光沢を出す。 */
+const chain = el("g", { "class": "lock-chain"});
+chain.appendChild(el("line", { x1: -24, y1: -22, x2: 24, y2: 26, stroke: "#14171a", "stroke-width": "9", "stroke-linecap": "round", opacity: "0.22"}));
+[-33, -22, -11, 0, 11, 22, 33].forEach((d, i) => {
+const cx = (d * 0.7071).toFixed(1), cy = (2 + d * 0.7071).toFixed(1);
+const rot = "rotate(" + (i % 2 === 0 ? 45 : -45) + " " + cx + " " + cy + ")";
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 8.6, ry: 5, transform: rot, fill: "none", stroke: "#2f343a", "stroke-width": "3.6"}));
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 8.6, ry: 5, transform: rot, fill: "none", stroke: "#aeb7bf", "stroke-width": "1.1", opacity: "0.9"}));
+});
+g.appendChild(chain);
 return g;
 };
 
