@@ -255,21 +255,49 @@ border-radius: 3px; margin-right: 6px; vertical-align: -1px;
 background: var(--c, #ccc);
 }
 
+/* テキスト中でマスを指すときのエリア色チップ（番号の直前に置く） */
+.area-chip {
+display: inline-block; width: 11px; height: 11px; border-radius: 3px;
+margin-right: 5px; vertical-align: -1px;
+}
+
 /* ---- 目標報酬の必要AP計算 ---- */
 .goal-box { flex: 1 1 100%; border-top: 1px dashed var(--panel-line); padding-top: 10px;}
 button.goal-toggle { min-height: 40px; padding: 8px 18px; font-size: 0.92rem;}
 #goal-panel { margin-top: 10px;}
 .goal-note { font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 8px; line-height: 1.5;}
 #goal-list {
-display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-gap: 2px 14px; max-height: 280px; overflow-y: auto;
-padding: 6px; border: 1px solid var(--panel-line); border-radius: 10px;
+max-height: 340px; overflow-y: auto;
+padding: 6px 10px; border: 1px solid var(--panel-line); border-radius: 10px;
 background: var(--panel-bg);
+}
+.goal-group { margin-bottom: 12px;}
+.goal-group:last-child { margin-bottom: 2px;}
+.goal-group-head {
+display: flex; align-items: center; gap: 8px;
+padding: 4px 2px 6px; margin-bottom: 4px;
+border-bottom: 1px solid var(--panel-line);
+}
+.goal-group-title { font-size: 0.95rem; font-weight: 800;}
+.goal-all {
+display: flex; align-items: center; gap: 5px; margin-left: auto;
+font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); cursor: pointer;
+}
+.goal-all input { width: 18px; height: 18px; cursor: pointer;}
+.goal-group-items {
+display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+gap: 2px 14px;
 }
 .goal-item { display: flex; align-items: flex-start; gap: 7px; font-size: 0.85rem; padding: 4px 2px; cursor: pointer; line-height: 1.35;}
 .goal-item input { margin-top: 1px; width: 18px; height: 18px; flex: none; cursor: pointer;}
 .goal-item .g-ap { color: var(--ink-soft); font-size: 0.78rem; white-space: nowrap; margin-left: auto;}
 .goal-result { font-size: 1rem; font-weight: 800; margin: 10px 0 0;}
+
+/* ---- 解放済みのリセット ---- */
+.reset-box { flex: 1 1 100%; border-top: 1px dashed var(--panel-line); padding-top: 10px;}
+.reset-msg { font-size: 0.9rem; font-weight: 700; margin: 0 0 8px;}
+#reset-confirm button { min-height: 40px; padding: 8px 18px; font-size: 0.92rem;}
+button.danger { background: #d63a3a; color: #ffffff; margin-right: 8px;}
 </style>
 </head>
 <body>
@@ -312,6 +340,14 @@ background: var(--panel-bg);
 <p class="goal-note">取りたい報酬にチェックを入れてください。現在の解放状況から、選んだ報酬をすべて取るために必要なAPとマス数を計算します（経路が重なるマスは1回だけ数え、鍵を取りに行くルートや扉の解放も含みます）。</p>
 <div id="goal-list"></div>
 <p class="goal-result" id="goal-result">報酬を選んでください。</p>
+</div>
+</div>
+<div class="reset-box">
+<button type="button" id="reset-open" class="toggle undo goal-toggle">解放済みをリセット</button>
+<div id="reset-confirm" hidden>
+<p class="reset-msg">解放済みの記録をすべて消します。よろしいですか？</p>
+<button type="button" id="reset-yes" class="toggle danger">リセットする</button>
+<button type="button" id="reset-no" class="toggle undo">キャンセル</button>
 </div>
 </div>
 </footer>
@@ -1132,6 +1168,29 @@ for (const k in AREA_COLORS) { if (t.name.indexOf(k) === 0) return k;}
 return null;
 }
 
+/* ページ内テキストでマスを指すときは、エリア名の代わりに
+エリア色の小さいチップ＋番号で表す（マップ本体のピルや内部データは変更しない） */
+function tileNameHtml(t) {
+const area = tileArea(t);
+if (!area) return t.name;
+return '<span class="area-chip" style="background:' + AREA_COLORS[area] + '"></span>' + t.name.slice(area.length);
+}
+function appendTileName(parent, t) {
+const area = tileArea(t);
+if (!area) { parent.appendChild(document.createTextNode(t.name)); return;}
+const chip = document.createElement("span");
+chip.className = "area-chip";
+chip.style.background = AREA_COLORS[area];
+parent.appendChild(chip);
+parent.appendChild(document.createTextNode(t.name.slice(area.length)));
+}
+function routeTiles(id) {
+const arr = [];
+let cur = id;
+while (cur) { arr.unshift(byId[cur]); cur = ROUTE.prev[cur];}
+return arr;
+}
+
 const tileEls = {};
 TILES.forEach(t => {
 const g = el("g", { "class": "tile", "data-id": t.id, role: "button", "aria-label": t.name});
@@ -1233,9 +1292,9 @@ const isOpen = unlocked.has(t.id);
 const isStart = t.type === "start";
 const total = CUMUL[t.id];
 const reachable = isFinite(total);
-const route = routeNames(t.id).join(" → ");
+const route = routeTiles(t.id).map(tileNameHtml).join(" → ");
 let html = "";
-html += "<h2>" + t.name + '<span class="badge ' + (isOpen? "open": "locked") + '">' + (isOpen? "解放済み": "未解放") + "</span></h2>";
+html += "<h2>" + tileNameHtml(t) + '<span class="badge ' + (isOpen? "open": "locked") + '">' + (isOpen? "解放済み": "未解放") + "</span></h2>";
 html += '<div class="d-grid">';
 html += '<div class="d-item"><div class="k">報酬の種類</div><div class="v">' + TYPE_LABEL[t.type] + "</div></div>";
 html += '<div class="d-item"><div class="k">必要ap</div><div class="v">' + (isStart? "―": (t.ap === null ? "不明" : t.ap + " <small>ap</small>")) + "</div></div>";
@@ -1249,7 +1308,7 @@ const color = lockColorOf(t);
 const keyId = color ? keyByColor[color] : null;
 const keyOpen = keyId ? unlocked.has(keyId) : false;
 html += '<p class="tile-detail">この扉を開けるには「' + color + 'の鍵」が必要です。' +
-(keyId ? '（鍵マス：' + byId[keyId].name + '／' + (keyOpen ? "解放済み" : "未解放") + '）' : "") + "</p>";
+(keyId ? '（鍵マス：' + tileNameHtml(byId[keyId]) + '／' + (keyOpen ? "解放済み" : "未解放") + '）' : "") + "</p>";
 }
 if (reachable) {
 html += '<p class="route">最短経路： <b>' + route + "</b>" +
@@ -1260,7 +1319,7 @@ html += '<p class="route">接続先は未確認のため、経路はまだ分か
 if (isStart) {
 html += '<p class="route">スタート地点は常時解放済みです。</p>';
 } else if (isOpen) {
-html += '<button type="button" class="toggle undo" id="toggle-btn">解放を取り消す</button>';
+html += '<button type="button" class="toggle undo" id="toggle-btn">このマスの解放を取り消す</button>';
 } else {
 const plan = computePlan(unlocked, t.id);
 if (!plan.ok) {
@@ -1283,6 +1342,7 @@ btn.addEventListener("click", () => {
 if (unlocked.has(t.id)) unlocked.delete(t.id); else unlocked.add(t.id);
 persist();
 refreshTiles(); refreshProgress(); renderDetail();
+if (typeof goalPanel !== "undefined" && !goalPanel.hidden) buildGoalList();
 });
 }
 const bulkBtn = document.getElementById("bulk-btn");
@@ -1292,6 +1352,7 @@ const plan = computePlan(unlocked, t.id);
 if (plan.ok) plan.order.forEach(id => unlocked.add(id));
 persist();
 refreshTiles(); refreshProgress(); renderDetail();
+if (typeof goalPanel !== "undefined" && !goalPanel.hidden) buildGoalList();
 });
 }
 }
@@ -1462,26 +1523,111 @@ const goalList = document.getElementById("goal-list");
 const goalResult = document.getElementById("goal-result");
 const goalChecked = new Set();
 
+/* 報酬のカテゴリ分け：マスの種類で決める。
+イベントは detail の内容で カード／ストーリー／プレート に分ける
+（マップ上の種別チップと同じ判定） */
+function goalCategory(t) {
+const d = t.detail || "";
+switch (t.type) {
+case "song": return "楽曲";
+case "event":
+if (d.indexOf("SSR［") >= 0) return "イベント（カード）";
+if (d.indexOf("チャプター") >= 0) return "イベント（ストーリー）";
+if (d.indexOf("Make UP Future") >= 0) return "イベント（プレート）";
+return "その他";
+case "shizuku": return "しずく";
+case "gift": return "プレゼント";
+case "all": return "強化アイテム";
+case "money": return "マニー";
+case "coin": return "メダル";
+case "ticket": return "解花チケット";
+case "plate": return "スターチケット";
+case "key": return "鍵";
+case "lock": return "扉";
+case "jewel": return "第5章ジュエル";
+case "card": return "SSR確定書";
+default: return "その他";
+}
+}
+const GOAL_CATEGORIES = ["楽曲", "イベント（カード）", "イベント（ストーリー）", "イベント（プレート）", "しずく", "プレゼント", "強化アイテム", "マニー", "メダル", "解花チケット", "スターチケット", "鍵", "扉", "第5章ジュエル", "SSR確定書", "その他"];
+
+const goalItemCbs = {}; /* マスID -> 個別チェックボックス */
+const goalCatCbs = {};  /* カテゴリ名 -> { cb: 全部選ぶチェックボックス, ids: [マスID] } */
+
+function syncGoalCat(cat) {
+const info = goalCatCbs[cat];
+if (!info) return;
+const n = info.ids.filter(id => goalChecked.has(id)).length;
+info.cb.checked = n > 0 && n === info.ids.length;
+info.cb.indeterminate = n > 0 && n < info.ids.length;
+}
+
 function buildGoalList() {
 goalList.innerHTML = "";
+for (const k in goalItemCbs) delete goalItemCbs[k];
+for (const k in goalCatCbs) delete goalCatCbs[k];
+const groups = {};
 TILES.filter(t => t.detail).forEach(t => {
+const cat = goalCategory(t);
+if (!groups[cat]) groups[cat] = [];
+groups[cat].push(t);
+});
+GOAL_CATEGORIES.forEach(cat => {
+const tiles = groups[cat];
+if (!tiles || !tiles.length) return;
+const ids = tiles.map(t => t.id);
+const group = document.createElement("div");
+group.className = "goal-group";
+const head = document.createElement("div");
+head.className = "goal-group-head";
+const title = document.createElement("span");
+title.className = "goal-group-title";
+title.textContent = cat;
+const allLabel = document.createElement("label");
+allLabel.className = "goal-all";
+const allCb = document.createElement("input");
+allCb.type = "checkbox";
+allCb.setAttribute("aria-label", cat + "を全部選ぶ");
+allLabel.appendChild(allCb);
+allLabel.appendChild(document.createTextNode("全部選ぶ"));
+head.appendChild(title); head.appendChild(allLabel);
+group.appendChild(head);
+goalCatCbs[cat] = { cb: allCb, ids: ids};
+allCb.addEventListener("change", () => {
+ids.forEach(id => {
+if (allCb.checked) goalChecked.add(id); else goalChecked.delete(id);
+if (goalItemCbs[id]) goalItemCbs[id].checked = allCb.checked;
+});
+allCb.indeterminate = false;
+updateGoalResult();
+});
+const items = document.createElement("div");
+items.className = "goal-group-items";
+tiles.forEach(t => {
 const label = document.createElement("label");
 label.className = "goal-item";
 const cb = document.createElement("input");
 cb.type = "checkbox";
 cb.value = t.id;
 cb.checked = goalChecked.has(t.id);
+goalItemCbs[t.id] = cb;
 cb.addEventListener("change", () => {
 if (cb.checked) goalChecked.add(t.id); else goalChecked.delete(t.id);
+syncGoalCat(cat);
 updateGoalResult();
 });
 const text = document.createElement("span");
-text.textContent = t.name + "：" + t.detail + (unlocked.has(t.id) ? "（解放済み）" : "");
+appendTileName(text, t);
+text.appendChild(document.createTextNode("：" + t.detail + (unlocked.has(t.id) ? "（解放済み）" : "")));
 const ap = document.createElement("span");
 ap.className = "g-ap";
 ap.textContent = (t.ap === null || t.ap === undefined) ? "" : t.ap + "ap";
 label.appendChild(cb); label.appendChild(text); label.appendChild(ap);
-goalList.appendChild(label);
+items.appendChild(label);
+});
+group.appendChild(items);
+goalList.appendChild(group);
+syncGoalCat(cat);
 });
 }
 function updateGoalResult() {
@@ -1512,6 +1658,26 @@ goalOpenBtn.addEventListener("click", () => {
 const willShow = goalPanel.hidden;
 goalPanel.hidden = !willShow;
 if (willShow) { buildGoalList(); updateGoalResult();}
+});
+
+/* ---------- 解放済みのリセット ---------- */
+const resetOpenBtn = document.getElementById("reset-open");
+const resetConfirmBox = document.getElementById("reset-confirm");
+resetOpenBtn.addEventListener("click", () => {
+resetConfirmBox.hidden = false;
+resetOpenBtn.hidden = true;
+});
+document.getElementById("reset-no").addEventListener("click", () => {
+resetConfirmBox.hidden = true;
+resetOpenBtn.hidden = false;
+});
+document.getElementById("reset-yes").addEventListener("click", () => {
+unlocked = new Set([START_ID]);
+persist();
+refreshTiles(); refreshProgress(); renderDetail();
+if (!goalPanel.hidden) buildGoalList();
+resetConfirmBox.hidden = true;
+resetOpenBtn.hidden = false;
 });
 
 /* ---------- 初期表示 ---------- */
