@@ -908,19 +908,19 @@ const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y 
 チェーンの色は南京錠本体に合わせた金色系にする
 （色名が取れる場合は色分け版が c.dark／c.light で同系色に描く） */
 const chain = el("g", { "class": "lock-chain"});
-chain.appendChild(el("line", { x1: -24, y1: -22, x2: 24, y2: 26, stroke: "#7a5200", "stroke-width": "5", "stroke-linecap": "round", opacity: "0.2"}));
-chain.appendChild(el("line", { x1: 24, y1: -22, x2: -24, y2: 26, stroke: "#7a5200", "stroke-width": "5", "stroke-linecap": "round", opacity: "0.2"}));
-[-31.5, -24.5, -17.5, -10.5, -3.5, 3.5, 10.5, 17.5, 24.5, 31.5].forEach((d, i) => {
+chain.appendChild(el("line", { x1: -24, y1: -22, x2: 24, y2: 26, stroke: "#7a5200", "stroke-width": "10", "stroke-linecap": "round", opacity: "0.18"}));
+chain.appendChild(el("line", { x1: 24, y1: -22, x2: -24, y2: 26, stroke: "#7a5200", "stroke-width": "10", "stroke-linecap": "round", opacity: "0.18"}));
+[-30, -20, -10, 0, 10, 20, 30].forEach((d, i) => {
 const cx = (d * 0.7071).toFixed(1), cy = (2 + d * 0.7071).toFixed(1);
-const rot = "rotate(" + (i % 2 === 0 ? 16 : 74) + " " + cx + " " + cy + ")";
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: "#7a5200", "stroke-width": "2.1"}));
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: "#ffe9a8", "stroke-width": "0.8", opacity: "0.9"}));
+const rot = "rotate(" + (i % 2 === 0 ? 45 : 135) + " " + cx + " " + cy + ")";
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: "#7a5200", "stroke-width": "3.4"}));
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: "#ffe9a8", "stroke-width": "1.2", opacity: "0.9"}));
 });
-[-31.5, -24.5, -17.5, -10.5, -3.5, 3.5, 10.5, 17.5, 24.5, 31.5].forEach((d, i) => {
+[-30, -20, -10, 0, 10, 20, 30].forEach((d, i) => {
 const cx = (-d * 0.7071).toFixed(1), cy = (2 + d * 0.7071).toFixed(1);
-const rot = "rotate(" + (i % 2 === 0 ? -16 : -74) + " " + cx + " " + cy + ")";
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: "#7a5200", "stroke-width": "2.1"}));
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: "#ffe9a8", "stroke-width": "0.8", opacity: "0.9"}));
+const rot = "rotate(" + (i % 2 === 0 ? -45 : 45) + " " + cx + " " + cy + ")";
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: "#7a5200", "stroke-width": "3.4"}));
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: "#ffe9a8", "stroke-width": "1.2", opacity: "0.9"}));
 });
 g.appendChild(chain);
 const shackle = el("path", { d: "M-9,0 L-9,-8 A9,9 0 0 1 9,-8 L9,0", fill: "none", stroke: "#7a5200", "stroke-width": "4.5", "stroke-linecap": "round"});
@@ -1189,24 +1189,23 @@ const g = el("g", { "class": "icon", transform: "translate(" + t.x + "," + (t.y 
 2本目：右上 (24,-22) から左下 (-24,26) へ、同じ中心 (0,2) を通る斜め線。
 2本が中心で交わり X字のクロスになる。
 まず同色の薄い影の帯を敷き、その上に楕円リンクを等間隔に並べる。
-リンクは喜平チェーンのように細長い平たい楕円にし、チェーンの進行方向（±45°）を
-軸に少しねじった向き（進行方向±約29°）を交互に繰り返して、平たくねじれながら
-連なる鎖らしく見せる。チェーン全体の幅も従来より細くする。
-各リンクは同色の濃い色（c.dark）の輪郭＋中央の明るい色（c.light）の線で立体感を出す。 */
+リンクは丸みのある楕円の輪にし、チェーンの進行方向（±45°）とそれに直交する
+向きを交互に繰り返して、輪が互い違いに連なる鎖らしく見せる。
+各リンクは同色の濃い色（c.dark）の太い輪郭＋中央の明るい色（c.light）の線で立体感を出す。 */
 const chain = el("g", { "class": "lock-chain"});
-chain.appendChild(el("line", { x1: -24, y1: -22, x2: 24, y2: 26, stroke: c.dark, "stroke-width": "5", "stroke-linecap": "round", opacity: "0.2"}));
-chain.appendChild(el("line", { x1: 24, y1: -22, x2: -24, y2: 26, stroke: c.dark, "stroke-width": "5", "stroke-linecap": "round", opacity: "0.2"}));
-[-31.5, -24.5, -17.5, -10.5, -3.5, 3.5, 10.5, 17.5, 24.5, 31.5].forEach((d, i) => {
+chain.appendChild(el("line", { x1: -24, y1: -22, x2: 24, y2: 26, stroke: c.dark, "stroke-width": "10", "stroke-linecap": "round", opacity: "0.18"}));
+chain.appendChild(el("line", { x1: 24, y1: -22, x2: -24, y2: 26, stroke: c.dark, "stroke-width": "10", "stroke-linecap": "round", opacity: "0.18"}));
+[-30, -20, -10, 0, 10, 20, 30].forEach((d, i) => {
 const cx = (d * 0.7071).toFixed(1), cy = (2 + d * 0.7071).toFixed(1);
-const rot = "rotate(" + (i % 2 === 0 ? 16 : 74) + " " + cx + " " + cy + ")";
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: c.dark, "stroke-width": "2.1"}));
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: c.light, "stroke-width": "0.8", opacity: "0.9"}));
+const rot = "rotate(" + (i % 2 === 0 ? 45 : 135) + " " + cx + " " + cy + ")";
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: c.dark, "stroke-width": "3.4"}));
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: c.light, "stroke-width": "1.2", opacity: "0.9"}));
 });
-[-31.5, -24.5, -17.5, -10.5, -3.5, 3.5, 10.5, 17.5, 24.5, 31.5].forEach((d, i) => {
+[-30, -20, -10, 0, 10, 20, 30].forEach((d, i) => {
 const cx = (-d * 0.7071).toFixed(1), cy = (2 + d * 0.7071).toFixed(1);
-const rot = "rotate(" + (i % 2 === 0 ? -16 : -74) + " " + cx + " " + cy + ")";
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: c.dark, "stroke-width": "2.1"}));
-chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 7.2, ry: 2.7, transform: rot, fill: "none", stroke: c.light, "stroke-width": "0.8", opacity: "0.9"}));
+const rot = "rotate(" + (i % 2 === 0 ? -45 : 45) + " " + cx + " " + cy + ")";
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: c.dark, "stroke-width": "3.4"}));
+chain.appendChild(el("ellipse", { cx: cx, cy: cy, rx: 6.8, ry: 4.8, transform: rot, fill: "none", stroke: c.light, "stroke-width": "1.2", opacity: "0.9"}));
 });
 g.appendChild(chain);
 /* --- 南京錠（一番上のレイヤー：チェーンの上に描く） --- */
