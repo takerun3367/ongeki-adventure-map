@@ -1550,14 +1550,14 @@ case "money": return "マニー";
 case "coin": return "メダル";
 case "ticket": return "解花チケット";
 case "plate": return "スターチケット";
-case "key": return "鍵";
-case "lock": return "扉";
+case "key": return "鍵と扉";
+case "lock": return "鍵と扉";
 case "jewel": return "第5章ジュエル";
 case "card": return "SSR確定書";
 default: return "その他";
 }
 }
-const GOAL_CATEGORIES = ["楽曲", "イベント（カード）", "イベント（ストーリー）", "イベント（プレート）", "しずく", "プレゼント", "強化アイテム", "マニー", "メダル", "解花チケット", "スターチケット", "鍵", "扉", "第5章ジュエル", "SSR確定書", "その他"];
+const GOAL_CATEGORIES = ["楽曲", "イベント（カード）", "イベント（ストーリー）", "イベント（プレート）", "しずく", "鍵と扉", "プレゼント", "強化アイテム", "マニー", "メダル", "解花チケット", "スターチケット", "第5章ジュエル", "SSR確定書", "その他"];
 
 const goalItemCbs = {}; /* マスID -> 個別チェックボックス */
 const goalCatCbs = {};  /* カテゴリ名 -> { cb: 全部選ぶチェックボックス, ids: [マスID] } */
