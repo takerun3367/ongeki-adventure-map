@@ -311,11 +311,11 @@ background: var(--btn-bg); color: var(--ink); cursor: pointer;
 .goal-result { font-size: 1rem; font-weight: 800; margin: 10px 0 0;}
 
 /* ---- 解放済みのリセット ---- */
-.reset-box { flex: 1 1 100%; border-top: 1px dashed var(--panel-line); padding-top: 10px;}
+.reset-box { flex: 1 1 100%; border-top: 1px dashed var(--panel-line); padding-top: 10px; display: flex; flex-direction: column; gap: 12px;}
+.reset-box > button { width: 100%; min-height: 48px;}
 .reset-msg { font-size: 0.9rem; font-weight: 700; margin: 0 0 8px;}
 #reset-confirm button { min-height: 40px; padding: 8px 18px; font-size: 0.92rem;}
 button.danger { background: #d63a3a; color: #ffffff; margin-right: 8px;}
-#undo-unlock { margin-right: 8px;}
 button.toggle:disabled { opacity: 0.45; cursor: default; box-shadow: none;}
 button.toggle:disabled:active { transform: none;}
 </style>
