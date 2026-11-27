@@ -183,6 +183,15 @@ transition: fill 0.2s ease;
 .tile.area-ne .hex { stroke: #aa5f0a;}
 .tile.area-se .hex { stroke: #822daa;}
 .tile.selected .hex { stroke: var(--ink); stroke-width: 6;}
+/* 目標報酬に設定したマスのハイライト：六角形の外側に太い輪郭＋発光のリングを出す */
+.tile .goal-ring {
+fill: none; stroke: #ff2e7e; stroke-width: 6; stroke-linejoin: round;
+opacity: 0; pointer-events: none;
+}
+.tile.goal .goal-ring {
+opacity: 1;
+filter: drop-shadow(0 0 5px rgba(255, 46, 126, 0.95)) drop-shadow(0 0 11px rgba(255, 46, 126, 0.55));
+}
 .tile .pill-num {
 font-size: 16px; font-weight: 800; fill: #ffffff; text-anchor: middle; pointer-events: none;
 }
@@ -593,6 +602,7 @@ card: "カード（SSR確定）"
 
 const START_ID = "S";
 const STORAGE_KEY = "ongeki-adventure-demo-unlocked-v1";
+const GOAL_STORAGE_KEY = "ongeki-adventure-demo-goals-v1";
 
 /* ---------- レイアウト ---------- */
 const STEP_X = 118, STEP_Y = 118;
@@ -929,8 +939,8 @@ tx.textContent = "★";
 return tx;
 },
 normal: t => {
-const c = el("circle", { cx: t.x, cy: t.y - 10, r: 5, fill: "#a8740a", "class": "icon", opacity: "0.65"});
-return c;
+/* 空白マスは無地にする（中央の点は描かない） */
+return el("g", { "class": "icon"});
 }
 };
 
@@ -1205,6 +1215,7 @@ const g = el("g", { "class": "tile", "data-id": t.id, role: "button", "aria-labe
 const area = tileArea(t);
 t.areaCls = area ? AREA_CLASS[area] : "";
 g.appendChild(el("polygon", { points: hexPoints(t.x, t.y, HEX_R), "class": "hex"}));
+g.appendChild(el("polygon", { points: hexPoints(t.x, t.y, HEX_R + 7), "class": "goal-ring"}));
 if (t.type === "start") {
 g.appendChild(ICONS[t.type](t));
 const cost = el("text", { x: t.x, y: t.y + 28, "class": "cost", "font-size": "13"});
@@ -1269,7 +1280,9 @@ TILES.forEach(t => {
 const g = tileEls[t.id];
 const isOpen = unlocked.has(t.id);
 g.setAttribute("class",
-"tile" + (isOpen? " open": " locked") + (t.type === "start"? " start": "") + (t.areaCls ? " " + t.areaCls : "") + (selectedId === t.id? " selected": ""));
+"tile" + (isOpen? " open": " locked") + (t.type === "start"? " start": "") + (t.areaCls ? " " + t.areaCls : "") + (selectedId === t.id? " selected": "") + (goalChecked.has(t.id)? " goal": ""));
+/* 目標マスは隣のマスにリングが隠れないよう最前面へ出す */
+if (goalChecked.has(t.id)) gTiles.appendChild(g);
 const check = g.querySelector("[data-check]");
 if (check) check.style.display = isOpen && t.type!== "start"? "": "none";
 });
@@ -1530,6 +1543,17 @@ const goalPanel = document.getElementById("goal-panel");
 const goalList = document.getElementById("goal-list");
 const goalResult = document.getElementById("goal-result");
 const goalChecked = new Set();
+/* 目標の選択状態は localStorage に保存し、再読み込み後もハイライトが残るようにする */
+if (storage) {
+try {
+const savedGoals = JSON.parse(storage.getItem(GOAL_STORAGE_KEY) || "[]");
+if (Array.isArray(savedGoals)) savedGoals.forEach(id => { if (byId[id]) goalChecked.add(id);});
+} catch (e) { /* 読み取りに失敗した場合は未選択の状態で続行 */ }
+}
+function persistGoals() {
+if (!storage) return;
+try { storage.setItem(GOAL_STORAGE_KEY, JSON.stringify(Array.from(goalChecked)));} catch (e) {}
+}
 
 /* 報酬のカテゴリ分け：マスの種類で決める。
 イベントは detail の内容で カード／ストーリー／プレート に分ける
@@ -1612,6 +1636,8 @@ if (allCb.checked) goalChecked.add(id); else goalChecked.delete(id);
 if (goalItemCbs[id]) goalItemCbs[id].checked = allCb.checked;
 });
 allCb.indeterminate = false;
+persistGoals();
+refreshTiles();
 updateGoalResult();
 });
 const items = document.createElement("div");
@@ -1635,6 +1661,8 @@ goalItemCbs[t.id] = cb;
 cb.addEventListener("change", () => {
 if (cb.checked) goalChecked.add(t.id); else goalChecked.delete(t.id);
 syncGoalCat(cat);
+persistGoals();
+refreshTiles();
 updateGoalResult();
 });
 const text = document.createElement("span");
