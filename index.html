@@ -315,6 +315,9 @@ background: var(--btn-bg); color: var(--ink); cursor: pointer;
 .reset-msg { font-size: 0.9rem; font-weight: 700; margin: 0 0 8px;}
 #reset-confirm button { min-height: 40px; padding: 8px 18px; font-size: 0.92rem;}
 button.danger { background: #d63a3a; color: #ffffff; margin-right: 8px;}
+#undo-unlock { margin-right: 8px;}
+button.toggle:disabled { opacity: 0.45; cursor: default; box-shadow: none;}
+button.toggle:disabled:active { transform: none;}
 </style>
 </head>
 <body>
@@ -360,6 +363,7 @@ button.danger { background: #d63a3a; color: #ffffff; margin-right: 8px;}
 </div>
 </div>
 <div class="reset-box">
+<button type="button" id="undo-unlock" class="toggle undo goal-toggle" disabled>直前の解放を取り消す</button>
 <button type="button" id="reset-open" class="toggle undo goal-toggle">解放済みをリセット</button>
 <div id="reset-confirm" hidden>
 <p class="reset-msg">解放済みの記録をすべて消します。よろしいですか？</p>
@@ -772,6 +776,36 @@ unlocked.add(START_ID);
 function persist() {
 if (!storage) return;
 try { storage.setItem(STORAGE_KEY, JSON.stringify(Array.from(unlocked)));} catch (e) {}
+}
+
+/* ---------- 解放の履歴（「直前の解放を取り消す」用） ----------
+解放操作（1マスの解放・まとめて解放）の直前の解放状態を1操作分ずつ積む。
+履歴自体も localStorage に保存し、再読み込み後も取り消せるようにする */
+const HISTORY_KEY = "ongeki-adventure-demo-unlock-history-v1";
+let unlockHistory = [];
+if (storage) {
+try {
+const savedHist = JSON.parse(storage.getItem(HISTORY_KEY) || "[]");
+if (Array.isArray(savedHist)) {
+unlockHistory = savedHist
+.filter(e => Array.isArray(e))
+.map(e => e.filter(id => byId[id]));
+}
+} catch (e) { /* 読み取りに失敗した場合は履歴なしで続行 */ }
+}
+function persistHistory() {
+if (!storage) return;
+try { storage.setItem(HISTORY_KEY, JSON.stringify(unlockHistory));} catch (e) {}
+}
+function updateUndoBtn() {
+const b = document.getElementById("undo-unlock");
+if (b) b.disabled = unlockHistory.length === 0;
+}
+function pushHistory() {
+unlockHistory.push(Array.from(unlocked));
+if (unlockHistory.length > 100) unlockHistory.splice(0, unlockHistory.length - 100);
+persistHistory();
+updateUndoBtn();
 }
 
 /* ---------- SVG 構築 ---------- */
@@ -1412,7 +1446,8 @@ detail.innerHTML = html;
 const btn = document.getElementById("toggle-btn");
 if (btn) {
 btn.addEventListener("click", () => {
-if (unlocked.has(t.id)) unlocked.delete(t.id); else unlocked.add(t.id);
+if (unlocked.has(t.id)) { unlocked.delete(t.id); }
+else { pushHistory(); unlocked.add(t.id); }
 persist();
 refreshTiles(); refreshProgress(); renderDetail();
 if (typeof goalPanel !== "undefined" && !goalPanel.hidden) buildGoalList();
@@ -1422,7 +1457,7 @@ const bulkBtn = document.getElementById("bulk-btn");
 if (bulkBtn) {
 bulkBtn.addEventListener("click", () => {
 const plan = computePlan(unlocked, t.id);
-if (plan.ok) plan.order.forEach(id => unlocked.add(id));
+if (plan.ok && plan.order.length) { pushHistory(); plan.order.forEach(id => unlocked.add(id)); }
 persist();
 refreshTiles(); refreshProgress(); renderDetail();
 if (typeof goalPanel !== "undefined" && !goalPanel.hidden) buildGoalList();
@@ -1785,11 +1820,28 @@ resetOpenBtn.hidden = false;
 document.getElementById("reset-yes").addEventListener("click", () => {
 unlocked = new Set([START_ID]);
 persist();
+unlockHistory = [];
+persistHistory();
+updateUndoBtn();
 refreshTiles(); refreshProgress(); renderDetail();
 if (!goalPanel.hidden) buildGoalList();
 resetConfirmBox.hidden = true;
 resetOpenBtn.hidden = false;
 });
+
+/* ---------- 直前の解放を取り消す ---------- */
+document.getElementById("undo-unlock").addEventListener("click", () => {
+if (!unlockHistory.length) return;
+const prev = unlockHistory.pop();
+unlocked = new Set(prev.filter(id => byId[id]));
+unlocked.add(START_ID);
+persist();
+persistHistory();
+updateUndoBtn();
+refreshTiles(); refreshProgress(); renderDetail();
+if (!goalPanel.hidden) buildGoalList();
+});
+updateUndoBtn();
 
 /* ---------- 初期表示 ---------- */
 refreshTiles();
