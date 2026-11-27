@@ -254,6 +254,22 @@ content: ""; display: inline-block; width: 11px; height: 11px;
 border-radius: 3px; margin-right: 6px; vertical-align: -1px;
 background: var(--c, #ccc);
 }
+
+/* ---- 目標報酬の必要AP計算 ---- */
+.goal-box { flex: 1 1 100%; border-top: 1px dashed var(--panel-line); padding-top: 10px;}
+button.goal-toggle { min-height: 40px; padding: 8px 18px; font-size: 0.92rem;}
+#goal-panel { margin-top: 10px;}
+.goal-note { font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 8px; line-height: 1.5;}
+#goal-list {
+display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+gap: 2px 14px; max-height: 280px; overflow-y: auto;
+padding: 6px; border: 1px solid var(--panel-line); border-radius: 10px;
+background: var(--panel-bg);
+}
+.goal-item { display: flex; align-items: flex-start; gap: 7px; font-size: 0.85rem; padding: 4px 2px; cursor: pointer; line-height: 1.35;}
+.goal-item input { margin-top: 1px; width: 18px; height: 18px; flex: none; cursor: pointer;}
+.goal-item .g-ap { color: var(--ink-soft); font-size: 0.78rem; white-space: nowrap; margin-left: auto;}
+.goal-result { font-size: 1rem; font-weight: 800; margin: 10px 0 0;}
 </style>
 </head>
 <body>
@@ -289,6 +305,14 @@ background: var(--c, #ccc);
 <div>
 <div class="p-label">解放済みの合計</div>
 <div class="p-value"><span id="p-ap">0</span> <small>ap</small></div>
+</div>
+<div class="goal-box">
+<button type="button" id="goal-open" class="toggle undo goal-toggle">目標報酬を設定する</button>
+<div id="goal-panel" hidden>
+<p class="goal-note">取りたい報酬にチェックを入れてください。現在の解放状況から、選んだ報酬をすべて取るために必要なAPとマス数を計算します（経路が重なるマスは1回だけ数え、鍵を取りに行くルートや扉の解放も含みます）。</p>
+<div id="goal-list"></div>
+<p class="goal-result" id="goal-result">報酬を選んでください。</p>
+</div>
 </div>
 </footer>
 </div>
@@ -426,11 +450,11 @@ const TILES = [
 { id: "FLWD", name: "右下30", type: "normal", ap: 20, gx: 7, gy: 12},
 { id: "SZ100S", name: "右下31", type: "shizuku", ap: 100, gx: 8, gy: 13, detail: "しずく×2"},
 { id: "KEY30S", name: "右下32", type: "key", ap: 30, gx: 9, gy: 14, detail: "黄の鍵"},
-{ id: "ALL30K2", name: "左下32", type: "all", ap: 30, gx: -11, gy: 11, detail: "強化アイテム（大）×1"},
-{ id: "P20K1", name: "左下35", type: "normal", ap: 20, gx: -11, gy: 12},
-{ id: "COIN50", name: "左下36", type: "coin", ap: 50, gx: -11, gy: 13, detail: "メダル×2"},
-{ id: "P20K2", name: "左下37", type: "normal", ap: 20, gx: -11, gy: 14},
-{ id: "ALL30K3", name: "左下38", type: "all", ap: 30, gx: -11, gy: 15, detail: "強化アイテム（大）×1"},
+{ id: "ALL30K2", name: "左下32", type: "all", ap: 30, gx: -10, gy: 11, detail: "強化アイテム（大）×1"},
+{ id: "P20K1", name: "左下35", type: "normal", ap: 20, gx: -10, gy: 12},
+{ id: "COIN50", name: "左下36", type: "coin", ap: 50, gx: -10, gy: 13, detail: "メダル×2"},
+{ id: "P20K2", name: "左下37", type: "normal", ap: 20, gx: -10, gy: 14},
+{ id: "ALL30K3", name: "左下38", type: "all", ap: 30, gx: -10, gy: 15, detail: "強化アイテム（大）×1"},
 { id: "M60K2", name: "左下39", type: "money", ap: 60, gx: -12, gy: 13, detail: "10,000マニー"},
 { id: "P20K3", name: "左下40", type: "normal", ap: 20, gx: -13, gy: 13},
 { id: "G75K1", name: "左下41", type: "gift", ap: 75, gx: -13, gy: 12, detail: "親密度上昇プレゼント（大）×1"},
@@ -568,6 +592,107 @@ let cur = id;
 while (cur) { names.unshift(byId[cur].name); cur = ROUTE.prev[cur];}
 return names;
 }
+
+/* ---------- 鍵と扉 ----------
+扉（type: lock）は、detail の色名（桃・青・黄）が一致する鍵（type: key）を
+解放するまで通れない・解放できない。鍵自体が別の扉の先にある場合は
+再帰的に解決し、循環などで解決できない場合は解放不可とする。 */
+function keyColorOf(t) {
+const m = (t.detail || "").match(/(桃|青|黄)の鍵/);
+return m ? m[1] : null;
+}
+function lockColorOf(t) {
+const m = (t.detail || "").match(/(桃|青|黄)の扉/);
+return m ? m[1] : null;
+}
+const keyByColor = {};
+TILES.forEach(t => {
+if (t.type === "key") {
+const c = keyColorOf(t);
+if (c && !keyByColor[c]) keyByColor[c] = t.id;
+}
+});
+
+/* baseSet（解放済みとみなすマスの集合）から targetId を解放するために
+追加で解放すべきマスを、解放できる順序で返す。
+経路が扉を含む場合は、先に鍵を取りに行く経路を前に組み込む。
+戻り値: { ok, order: [id...], totalAp }（order は baseSet のマスを含まない） */
+function computePlan(baseSet, targetId) {
+const have = new Set(baseSet);
+const order = [];
+if (have.has(targetId)) return { ok: true, order: order, totalAp: 0};
+const resolving = new Set(); /* 解決中の鍵の色（循環検出） */
+
+function dijkstra(ignoreLocks) {
+const dist = {}, prev = {};
+TILES.forEach(t => { dist[t.id] = Infinity;});
+have.forEach(id => { dist[id] = 0;});
+const done = new Set();
+while (done.size < TILES.length) {
+let u = null, best = Infinity;
+for (const t of TILES) {
+if (!done.has(t.id) && dist[t.id] < best) { best = dist[t.id]; u = t.id;}
+}
+if (u === null) break;
+done.add(u);
+for (const v of adj[u]) {
+const tv = byId[v];
+if (!ignoreLocks && tv.type === "lock") {
+const keyId = keyByColor[lockColorOf(tv)];
+if (!keyId || !have.has(keyId)) continue; /* 鍵がなければ扉は通れない */
+}
+const nd = dist[u] + (have.has(v) ? 0 : (tv.ap || 0));
+if (nd < dist[v]) { dist[v] = nd; prev[v] = u;}
+}
+}
+return { dist, prev};
+}
+function pathTo(prev, target) {
+const path = [];
+let cur = target;
+while (cur && !have.has(cur)) { path.unshift(cur); cur = prev[cur];}
+return path;
+}
+function ensure(target) {
+if (have.has(target)) return true;
+let r = dijkstra(false);
+if (isFinite(r.dist[target])) {
+pathTo(r.prev, target).forEach(id => { order.push(id); have.add(id);});
+return true;
+}
+/* 扉を無視した経路から、最初に引っかかる扉の鍵を取りに行く */
+r = dijkstra(true);
+if (!isFinite(r.dist[target])) return false;
+const p = pathTo(r.prev, target);
+for (let i = 0; i < p.length; i++) {
+const t = byId[p[i]];
+if (t.type !== "lock") continue;
+const color = lockColorOf(t);
+const keyId = keyByColor[color];
+if (!keyId || have.has(keyId)) continue;
+if (resolving.has(color)) return false; /* 循環: 鍵がその扉の先にある等 */
+resolving.add(color);
+const okKey = ensure(keyId);
+resolving.delete(color);
+if (!okKey) return false;
+return ensure(target);
+}
+return false;
+}
+if (!ensure(targetId)) return { ok: false, order: [], totalAp: 0};
+let totalAp = 0;
+order.forEach(id => { totalAp += byId[id].ap || 0;});
+return { ok: true, order, totalAp};
+}
+
+/* スタートのみ解放済みの状態から各マスを解放するまでの累計ap
+（扉の先のマスは、鍵を取りに行くルートの分も含む） */
+const CUMUL = {};
+TILES.forEach(t => {
+if (t.id === START_ID) { CUMUL[t.id] = 0; return;}
+const plan = computePlan(new Set([START_ID]), t.id);
+CUMUL[t.id] = plan.ok ? plan.totalAp : Infinity;
+});
 
 /* ---------- 解放状態（localStorage） ---------- */
 /* iOS Safari（プライベートモード等）では localStorage へのアクセス自体が
@@ -1095,6 +1220,7 @@ document.getElementById("p-count").textContent = count;
 document.getElementById("p-total").textContent = TILES.length;
 document.getElementById("p-ap").textContent = apSum;
 document.getElementById("p-bar").style.width = (TILES.length? (count / TILES.length) * 100: 0) + "%";
+updateGoalResult();
 }
 
 function renderDetail() {
@@ -1105,7 +1231,7 @@ return;
 const t = byId[selectedId];
 const isOpen = unlocked.has(t.id);
 const isStart = t.type === "start";
-const total = ROUTE.dist[t.id];
+const total = CUMUL[t.id];
 const reachable = isFinite(total);
 const route = routeNames(t.id).join(" → ");
 let html = "";
@@ -1118,22 +1244,52 @@ html += "</div>";
 if (t.detail) {
 html += '<p class="tile-detail">' + t.detail + "</p>";
 }
+if (t.type === "lock") {
+const color = lockColorOf(t);
+const keyId = color ? keyByColor[color] : null;
+const keyOpen = keyId ? unlocked.has(keyId) : false;
+html += '<p class="tile-detail">この扉を開けるには「' + color + 'の鍵」が必要です。' +
+(keyId ? '（鍵マス：' + byId[keyId].name + '／' + (keyOpen ? "解放済み" : "未解放") + '）' : "") + "</p>";
+}
 if (reachable) {
-html += '<p class="route">最短経路： <b>' + route + "</b></p>";
+html += '<p class="route">最短経路： <b>' + route + "</b>" +
+(total > (ROUTE.dist[t.id] || 0) ? "（合計apには鍵を取りに行く分を含みます）" : "") + "</p>";
 } else {
 html += '<p class="route">接続先は未確認のため、経路はまだ分かりません。</p>';
 }
-if (!isStart) {
-html += '<button type="button" class="toggle' + (isOpen? " undo": "") + '" id="toggle-btn">' +
-(isOpen? "解放を取り消す": "解放済みにする") + "</button>";
-} else {
+if (isStart) {
 html += '<p class="route">スタート地点は常時解放済みです。</p>';
+} else if (isOpen) {
+html += '<button type="button" class="toggle undo" id="toggle-btn">解放を取り消す</button>';
+} else {
+const plan = computePlan(unlocked, t.id);
+if (!plan.ok) {
+html += '<p class="route">今の状態では解放できません。</p>';
+} else if (plan.order.length <= 1) {
+html += '<button type="button" class="toggle" id="toggle-btn">解放済みにする</button>';
+} else {
+const keyNames = plan.order.filter(id => byId[id].type === "key").map(id => byId[id].detail);
+let msg = "";
+if (keyNames.length) msg += "先に「" + keyNames.join("」「") + "」を取りに行くルートを含め、";
+msg += "このマスまでの経路にある未解放マス " + plan.order.length + " 個をまとめて解放します。合計 " + plan.totalAp + " APが必要です。";
+html += '<p class="route">' + msg + "</p>";
+html += '<button type="button" class="toggle" id="bulk-btn">まとめて解放する</button>';
+}
 }
 detail.innerHTML = html;
 const btn = document.getElementById("toggle-btn");
 if (btn) {
 btn.addEventListener("click", () => {
 if (unlocked.has(t.id)) unlocked.delete(t.id); else unlocked.add(t.id);
+persist();
+refreshTiles(); refreshProgress(); renderDetail();
+});
+}
+const bulkBtn = document.getElementById("bulk-btn");
+if (bulkBtn) {
+bulkBtn.addEventListener("click", () => {
+const plan = computePlan(unlocked, t.id);
+if (plan.ok) plan.order.forEach(id => unlocked.add(id));
 persist();
 refreshTiles(); refreshProgress(); renderDetail();
 });
@@ -1298,6 +1454,65 @@ if (e.touches.length === 1 && fbDown) { e.preventDefault(); fbMove(e.touches[0].
 svg.addEventListener("touchend", fbEnd);
 svg.addEventListener("touchcancel", fbEnd);
 }
+
+/* ---------- 目標報酬の必要AP計算 ---------- */
+const goalOpenBtn = document.getElementById("goal-open");
+const goalPanel = document.getElementById("goal-panel");
+const goalList = document.getElementById("goal-list");
+const goalResult = document.getElementById("goal-result");
+const goalChecked = new Set();
+
+function buildGoalList() {
+goalList.innerHTML = "";
+TILES.filter(t => t.detail).forEach(t => {
+const label = document.createElement("label");
+label.className = "goal-item";
+const cb = document.createElement("input");
+cb.type = "checkbox";
+cb.value = t.id;
+cb.checked = goalChecked.has(t.id);
+cb.addEventListener("change", () => {
+if (cb.checked) goalChecked.add(t.id); else goalChecked.delete(t.id);
+updateGoalResult();
+});
+const text = document.createElement("span");
+text.textContent = t.name + "：" + t.detail + (unlocked.has(t.id) ? "（解放済み）" : "");
+const ap = document.createElement("span");
+ap.className = "g-ap";
+ap.textContent = (t.ap === null || t.ap === undefined) ? "" : t.ap + "ap";
+label.appendChild(cb); label.appendChild(text); label.appendChild(ap);
+goalList.appendChild(label);
+});
+}
+function updateGoalResult() {
+if (!goalResult) return;
+if (!goalChecked.size) { goalResult.textContent = "報酬を選んでください。"; return;}
+const have = new Set(unlocked);
+const need = new Set();
+let totalAp = 0;
+for (const id of goalChecked) {
+if (have.has(id)) continue;
+const plan = computePlan(have, id);
+if (!plan.ok) {
+goalResult.textContent = "選択した報酬の中に、今の状態では解放できないマスがあります。";
+return;
+}
+plan.order.forEach(x => {
+if (!need.has(x)) { need.add(x); totalAp += byId[x].ap || 0;}
+have.add(x);
+});
+}
+if (!need.size) {
+goalResult.textContent = "選択した報酬はすべて解放済みです。追加で必要なAPは 0 です。";
+return;
+}
+goalResult.textContent = "解放が必要なマス：" + need.size + " 個 ／ 合計 " + totalAp + " AP";
+}
+goalOpenBtn.addEventListener("click", () => {
+const willShow = goalPanel.hidden;
+goalPanel.hidden = !willShow;
+if (willShow) { buildGoalList(); updateGoalResult();}
+});
 
 /* ---------- 初期表示 ---------- */
 refreshTiles();
