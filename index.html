@@ -285,8 +285,16 @@ font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); cursor: pointer;
 }
 .goal-all input { width: 18px; height: 18px; cursor: pointer;}
 .goal-group-items {
-display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 gap: 2px 14px;
+}
+.goal-group-items[hidden] { display: none;}
+.goal-group-title { cursor: pointer;}
+button.goal-expand {
+min-height: 28px; padding: 2px 12px;
+font-size: 0.78rem; font-weight: 700;
+border: 1px solid var(--btn-line); border-radius: 999px;
+background: var(--btn-bg); color: var(--ink); cursor: pointer;
 }
 .goal-item { display: flex; align-items: flex-start; gap: 7px; font-size: 0.85rem; padding: 4px 2px; cursor: pointer; line-height: 1.35;}
 .goal-item input { margin-top: 1px; width: 18px; height: 18px; flex: none; cursor: pointer;}
@@ -337,7 +345,7 @@ button.danger { background: #d63a3a; color: #ffffff; margin-right: 8px;}
 <div class="goal-box">
 <button type="button" id="goal-open" class="toggle undo goal-toggle">目標報酬を設定する</button>
 <div id="goal-panel" hidden>
-<p class="goal-note">取りたい報酬にチェックを入れてください。現在の解放状況から、選んだ報酬をすべて取るために必要なAPとマス数を計算します（経路が重なるマスは1回だけ数え、鍵を取りに行くルートや扉の解放も含みます）。</p>
+<p class="goal-note">取りたい報酬にチェックを入れてください。現在の解放状況から、選んだ報酬をすべて取るために必要なAPとマス数を計算します（経路が重なるマスは1回だけ数え、鍵を取りに行くルートや扉の解放も含みます）。各報酬の右側には、そのマス自体のAPと、現在の解放状況から最短経路を通って解放する場合の累計APを併記しています。</p>
 <div id="goal-list"></div>
 <p class="goal-result" id="goal-result">報酬を選んでください。</p>
 </div>
@@ -492,7 +500,7 @@ const TILES = [
 { id: "P20K2", name: "左下37", type: "normal", ap: 20, gx: -10, gy: 14},
 { id: "ALL30K3", name: "左下38", type: "all", ap: 30, gx: -10, gy: 15, detail: "強化アイテム（大）×1"},
 { id: "M60K2", name: "左下39", type: "money", ap: 60, gx: -12, gy: 13, detail: "10,000マニー"},
-{ id: "P20K3", name: "左下40", type: "normal", ap: 20, gx: -13, gy: 13},
+{ id: "P20K3", name: "左下40", type: "normal", ap: 20, gx: -14, gy: 13},
 { id: "G75K1", name: "左下41", type: "gift", ap: 75, gx: -13, gy: 12, detail: "親密度上昇プレゼント（大）×1"},
 { id: "SZ500K1", name: "左下42", type: "shizuku", ap: 500, gx: -13, gy: 11, detail: "しずく×5"},
 { id: "G75K2", name: "左下43", type: "gift", ap: 75, gx: -13, gy: 14, detail: "親密度上昇プレゼント（大）×1"},
@@ -1583,6 +1591,11 @@ head.className = "goal-group-head";
 const title = document.createElement("span");
 title.className = "goal-group-title";
 title.textContent = cat;
+const expandBtn = document.createElement("button");
+expandBtn.type = "button";
+expandBtn.className = "goal-expand";
+expandBtn.textContent = "個別に選ぶ";
+expandBtn.setAttribute("aria-expanded", "false");
 const allLabel = document.createElement("label");
 allLabel.className = "goal-all";
 const allCb = document.createElement("input");
@@ -1590,7 +1603,7 @@ allCb.type = "checkbox";
 allCb.setAttribute("aria-label", cat + "を全部選ぶ");
 allLabel.appendChild(allCb);
 allLabel.appendChild(document.createTextNode("全部選ぶ"));
-head.appendChild(title); head.appendChild(allLabel);
+head.appendChild(title); head.appendChild(expandBtn); head.appendChild(allLabel);
 group.appendChild(head);
 goalCatCbs[cat] = { cb: allCb, ids: ids};
 allCb.addEventListener("change", () => {
@@ -1603,6 +1616,14 @@ updateGoalResult();
 });
 const items = document.createElement("div");
 items.className = "goal-group-items";
+items.hidden = true; /* 個別マスのリストは初期状態では折りたたむ */
+const toggleItems = () => {
+items.hidden = !items.hidden;
+expandBtn.textContent = items.hidden ? "個別に選ぶ" : "閉じる";
+expandBtn.setAttribute("aria-expanded", String(!items.hidden));
+};
+expandBtn.addEventListener("click", toggleItems);
+title.addEventListener("click", toggleItems);
 tiles.forEach(t => {
 const label = document.createElement("label");
 label.className = "goal-item";
@@ -1621,7 +1642,17 @@ appendTileName(text, t);
 text.appendChild(document.createTextNode("：" + t.detail + (unlocked.has(t.id) ? "（解放済み）" : "")));
 const ap = document.createElement("span");
 ap.className = "g-ap";
-ap.textContent = (t.ap === null || t.ap === undefined) ? "" : t.ap + "ap";
+if (unlocked.has(t.id)) {
+ap.textContent = "解放済み";
+} else if (t.ap === null || t.ap === undefined) {
+ap.textContent = "";
+} else {
+/* 現在の解放状況から最短経路（鍵・扉の前提込み）で解放する場合の累計AP */
+const plan = computePlan(unlocked, t.id);
+ap.textContent = plan.ok
+? "AP" + t.ap + "（経路込み累計 " + plan.totalAp + "）"
+: "AP" + t.ap + "（経路込み累計 ―）";
+}
 label.appendChild(cb); label.appendChild(text); label.appendChild(ap);
 items.appendChild(label);
 });
